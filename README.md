@@ -8,5 +8,5 @@
 
 # 文章更新方式
 
-由于gitbook要翻墙才能访问,所以每次有内容的变更会不够方便,而gitbook又非常方便的与markdown兼容,所以会首先将更新的内容放在我的个人博客[http://xpercent.tech](http://xpercent.tech)
+由于gitbook要翻墙才能访问,所以每次有内容的变更会不够方便,而gitbook又非常方便的与markdown兼容,所以会首先将更新的内容放在我的个人\[博客\]\([http://xpercent.tech](http://xpercent.tech)\)
 
