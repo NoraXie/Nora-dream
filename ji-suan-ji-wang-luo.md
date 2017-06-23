@@ -144,7 +144,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 $TTL 600;
 NAME  TTL(可省略,但必须提供全局变量)    IN    RRT    VALUE
 www.baidu.com                       IN    A      1.1.1.1
-1.1.1.1                             IN    PTR    www.baidu.com     
+1.1.1.1                             IN    PTR    www.baidu.com
 ```
 
 > 资源记录类型RRT
@@ -193,8 +193,6 @@ ZONE NAME     TTL     IN    RRT    PRI    VALUE
 baidu.com.     600    IN    MX     10     mail.baidu.com.
 mail.baidu.com.600    IN    A             1.1.1.1
 ```
-
-
 
 ### ISO 的 OSI 七层模型
 
