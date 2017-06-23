@@ -6,7 +6,7 @@ SPOTO ccna培训视频
 
 #### DNS解析及DNS服务器的搭建
 
-#### 什么是DNS
+##### 什么是DNS
 
 > 域名
 
@@ -102,7 +102,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 
 这个文件中的nameserver IP必须是允许递归的服务器地址,而stub resolver又是一个要求必须有应答的递归请求.因些,一旦写成不允许递归的IP, stub resolver将得不到应答.
 
-#### DNS服务器
+##### DNS服务器
 
 不同的域名层级实际就是由一台一台的域名服务器组织起来的.
 
@@ -130,9 +130,69 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 
 不提供权威答案,也不缓存,只将请求转发出去
 
-> **NOTE:** 
+> **NOTE:**
 >
 > DNS服务器是由上级在数据库授权的
+
+##### DNS主机角色
+
+所有域中的主机都有自己的角色,比如有的是邮件服务器,有的是www的服务器等等.
+
+在数据库中的每一个条目叫作一个资源记录,用以区分不同的主机角色.格式:
+
+```csh
+$TTL 600;
+NAME  TTL(可省略,但必须提供全局变量)    IN    RRT    VALUE
+www.baidu.com                       IN    A      1.1.1.1
+1.1.1.1                             IN    PTR    www.baidu.com     
+```
+
+> 资源记录类型RRT
+
+用来表示这条记录要解析的值在DNS内部是什么角色.
+
+* A
+* AAAA
+* NS
+* MX
+* WWW
+* PTR
+
+> A记录
+
+```zsh
+FQDN           ---> IPv4
+www.baidu.com. ---> 119.75.213.61
+```
+
+> AAAA记录
+
+```zsh
+FQDN           ---> IPv6
+www.baidu.com. ---> 2001:503:ba3e::2:30
+```
+
+> NS记录
+
+```zsh
+Zone Name      ---> FQDN
+
+baidu.com.     ---> ns1.baidu.com.(NS记录)
+ns1.baidu.com. ---> 119.75.213.61(A记录)
+
+ZoneName    TTL    IN    RRT    
+baidu.com.    600    IN    NS    ns1.baidu.com.
+```
+
+> MX\(Mail Exchanger\)记录
+
+```zsh
+ZONE NAME      ---> FQDN
+
+ZONE NAME     TTL     IN    RRT    PRI    VALUE
+baidu.com.     600    IN    MX     10     mail.baidu.com.
+mail.baidu.com.600    IN    A             1.1.1.1
+```
 
 
 
