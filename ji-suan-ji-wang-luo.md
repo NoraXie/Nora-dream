@@ -192,17 +192,19 @@ ns1.baidu.com. ---> 119.75.213.61(A记录)
 
 ZoneName      TTL    IN    RRT   VALUE     
 baidu.com.    600    IN    NS    ns1.baidu.com.
-ns1.baidu.com.600    IN    A     1.1.1.1 
+ns1.baidu.com.600    IN    A     1.1.1.1
 ```
 
 > SOA:起始授权记录
 
 由于一个zone内,允许有多台NS服务器,主从之间如何同步数据,以及起始授权对象是谁.
 
+邮箱格式正常为 nora@126.com, 但是在资源记录中要写成nora.126.com.因为在资源记录中这个@
+
 ```zsh
 $TTL 600;
 ZONE NAME    IN    MASTER FQDN    RRT    ADMINISTRATOR_MAILBOX
-baidu.com    IN            
+baidu.com    IN    
 ```
 
 > MX\(Mail Exchanger\)
