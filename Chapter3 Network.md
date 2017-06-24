@@ -6,6 +6,8 @@
   * [DNS服务器](#DNS服务器)
   * [DNS主机角色](#DNS主机角色)
   * [资源记录类型RRT](#资源记录类型RRT)
+  * [还有一些概念](#还有一些概念)
+  * [DNS服务器搭建](#DNS服务器搭建)
 * [ISO的OSI七层模型](#ISO的OSI七层模型)
 * [数据在网络中传输时封装](#数据在网络中传输时封装)
 
@@ -76,9 +78,9 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
   * 下级仅知道根的位置
   * 按Level管理域名
   * TLD\(Top Level Domain\)
-    * 组织域: .com, .org, .net, .cc
-    * 国家域: .cn, .jp, .hk, .tw, .ca, .iq
-    * 反向域: IP---&gt;FQDN
+	  * 组织域: .com, .org, .net, .cc
+  	  * 国家域: .cn, .jp, .hk, .tw, .ca, .iq
+  	  * 反向域: IP--->FQDN
 
 但随着互联网中主机数量增大,后来民间成立了一个ICANN替代了IANA的作用.
 
@@ -197,14 +199,28 @@ ns1.baidu.com.600    IN    A     1.1.1.1
 
 > SOA:起始授权记录
 
-由于一个zone内,允许有多台NS服务器,主从之间如何同步数据,以及起始授权对象是谁.
+由于一个zone内,允许有多台NS服务器,**主从之间如何同步数据,以及起始授权对象是谁**,这个申明通过SOA记录负责完成.这条记录必须出现在数据文件的第一条.
 
-邮箱格式正常为 nora@126.com, 但是在资源记录中要写成nora.126.com.因为在资源记录中这个@
+邮箱格式正常为 nora@126.com, 但是在资源记录中要写成nora.126.com.因为在资源记录中这个@是一个通配符,代表zone name. 
 
 ```zsh
+# MASTER FQDN 是主DNS服务器主机全限定主名称
+# 主从之间请求的几个参数可以用的单位有: H, M, D, W, 默认是S
+# serial number最长不能超过10位,一般使用时间戳,数据文件每修改一次,serialnumber也要修改一次
+# 这个资源数据文件中注释用`;`开头
 $TTL 600;
-ZONE NAME    IN    MASTER FQDN    RRT    ADMINISTRATOR_MAILBOX
-baidu.com    IN    
+ZONE NAME    IN		RRT		MASTER FQDN    ADMINISTRATOR_MAILBOX (
+										 serial number
+										 refresh
+										 retry
+										 expire
+										 negative answer)
+baidu.com    IN		SOA		ns1.baidu.com. admin.baidu.com. (
+										 201706241641 ; 版本号
+										 1H
+										 1M
+										 1W
+										 1D )
 ```
 
 > MX\(Mail Exchanger\)
@@ -219,12 +235,320 @@ baidu.com.        600     IN    MX     10     mail.baidu.com.
 mail.baidu.com.   600     IN    A             1.1.1.1
 ```
 
-> PTR记录
+> PTR记录: 反向解析,交换IP转换成FQDN
 
 ```zsh
 IP             ---> FQDN
 1.1.1.1    600    IN    PTR    www.baidu.com
 ```
+
+> CNAME: Canonical Name 正式名称
+
+```ZSH
+FQDN			  ---> FQDN
+zone name			TTL		IN		RRT		VALUE
+www2.baidu.com.	600  	IN		CNAME	www.baidu.com.
+```
+
+##### 还有一些概念 {#还有一些概念}
+* 域: Domain是一个逻辑概念.
+* 区域: Zone是一个物理概念. 
+ 
+> **NOTE:**  
+> Zone是一个物理概念.一个域名在DNS解析的过程中依赖解析数据文件,正向解析依赖正向解析文件,反向解析依赖反向解析文件,正向解析文件即正向区域,反向解析文件即反向区域.这两个区域构成的空间即为域.但是域与区域之间没有必然的包含关系.因为域由上级授权,授权通过区域完成,因此域来自于区域文件.同时,正向域与反向域的授权是分开进行的.正向区域的zone name与域名相同,但是反向区域的zone name却是与域名有很大的区别.
+
+```ZSH
+# 注册了一个域名 xpercent.com
+# 又从ICANN获得了一个网段 10.211.55.0/24
+# xpercent.com域中 域名解析服务器主机为 10.211.55.2
+# xpercent.com域中 还有一台MX邮件服务器, 主机IP为 10.211.55.3
+# 从上级获取授权, 写一个授权记录
+# 授权记录
+Zone Name			IN		RRT		VALUE
+xpercent.com.		IN		NS		ns1.xpercent.com.
+ns1.xpercent.com.IN		A		10.211.55.2
+
+# 正向区域文件
+Zone Name			 IN		RRT		FQDN	ADMIN_MAILBOX 
+xpercent.com. 	 IN		SOA		ns1.xpercent.com. mail.xpercent.com. (
+								201706241641 ; 版本号
+								1H
+								5M
+								1W
+								1D )
+xpercent.com. 	 IN 	MX		10.211.55.3
+www.xpercent.com. IN	A		10.211.55.2
+
+注意,soa的zone name写成@,@知道自己处于哪个域内,这是通过配置文件实现的.
+而此后的所有记录zone name都可以将域名去掉后只写前半段.**不可加上`.`**
+
+# 反向区域文件
+# ZONE NAME是网段地址的逆序且加上.in-addr.arpa后缀
+Zone Name					  	 IN		RRT		VALUE
+55.211.55.in-addr.arpa. 	 IN		SOA		
+2.55.211.10.in-addr.arpa.   IN 	PTR 	www.xpercent.com.
+# 上面的PTR记录zone name可简写为2
+```
+
+* 区域传送的类型
+	* 完全区域传送: axfr
+	* 增量区域传送: ixfr
+* 主从区域类型
+	* 主区域: 主DNS服务器 MASTER
+	* 从区域: 从DNS服务器 SLAVE
+	* 提示区域: 自己找不到的,根据hint找到根的位置 HINT
+	* 转发区域: 添加一条可递归的DNS服务器 FORWAR
+
+##### DNS服务器搭建 {#DNS服务器搭建}
+
+> **规划**  
+
+* 注册域名: xpercent.me 
+* 网段号: 10.211.55.0/24  
+* 搭一台缓冲DNS服务器: 10.211.55.1 负责解析注册域的所有FQDN工作
+* www.xpercent.me 10.211.55.1, 10.211.55.3    
+* mail.xpercent.me 10.211.55.2 
+* ftp.xpercent.me www.xpercent.me  
+
+> BIND安装
+
+```ZSH
+shell> rpm -qa | grep "^bind"
+shell> rpm install -y bind-lib, bind-utils, bind
+shell> rpm -qlv bind # 查看bind最后的安装目录及配置文件等
+# 文件列表如下
+drwxr-x---    2 root  named  0 May  9 21:43 /etc/named
+-rw-r-----    1 root  named  984 Nov 20 2015 /etc/named.conf
+-rw-r--r--    1 root  named  2389 May  9 21:43 /etc/named.iscdlv.key
+-rw-r-----    1 root  named  931 Jun 21  2007 /etc/named.rfc1912.zones
+-rw-r--r--    1 root  named  487 Jul 19  2010 /etc/named.root.key
+# 守护进程脚本
+-rwxr-xr-x    1 root  root   7992 May  9 21:43 /etc/rc.d/init.d/named
+# 守护进程脚本的配置文件
+-rw-r--r--    1 root    root 1695 May  9 21:43 /etc/sysconfig/named
+# rndc文件
+-rw-r-----    1 root    named  0 May  9 21:43 /etc/rndc.conf
+-rw-r-----    1 root    named  0 May  9 21:43 /etc/rndc.key
+# 二进制程序
+-rwxr-xr-x    2 root    root   550744 May  9 21:43 /usr/sbin/named
+-rwxr-xr-x    1 root    root   28464 May  9 21:43 /usr/sbin/named-checkconf
+-rwxr-xr-x    1 root    root   24416 May  9 21:43 /usr/sbin/named-
+checkzone
+# 区域数据文件
+-rw-r-----    1 root  named  3171 Jan 11  2016 /var/named/named.ca
+-rw-r-----    1 root  named  152 Dec 15  2009 /var/named/named.empty
+-rw-r-----    1 root  named  152 Jun 21  2007 /var/named/named.localhost
+-rw-r-----    1 root  named  168 Dec 15  2009 /var/named/named.loopback
+```
+
+
+> BIND相关文件
+
+* /etc/named 
+* /etc/named.conf BIND进程的工作属性,区域的定义等主配置文件,相当于已经安装caching-server
+* /etc/rndc.key
+	* rndc: 远程域名控制进程
+	* rndc.key: 是远程管理使用的密钥
+	* 配置文件其实是: /etc/rndc.conf
+* /var/named: 区域数据文件存储位置
+* /etc/rc.d/named: start|stop|restart|reload|status|configtest
+* /var/log/message: dns运行时日志文件
+* named: 二进制程序,位于/usr/sbin/named
+* named-checkconfig: 检查区域配置文件的语法
+* named-checkzone: 检查区域配置文件的语法 
+* named.ca: 13组根结点
+* named.localhost: 将localhost解析成127.0.0.1及::1
+* named.loopback: 本地主机名的正反向解析
+
+> DNS监听的端口
+
+* UDP 53, 默认的查询请求协议
+* TCP 53, 从服务器同步数据时用TCP
+* TCP 953, RNDC监听的端口
+
+> 数据文件注意事项
+
+格式: 全文所有括号前后有空格,每一个完整语句必须以`;`结束.
+
+```ZSH
+ZONE "ZONE NAME" IN {
+	type master|slave|hint|forward
+	file "相对option中的directory而言"
+};
+```
+
+* options: 全局选项,对每一个zone有效
+	* directory: 定义数据目录,是个相对路径,文件中其它目录都相对这个路径而言
+	* recursion: 是否给所接收的请求进行递归查询 
+* ZONE: 
+	* 根区域: type hint;
+	* 主区域: type master;
+	* 从区域: type slave;
+* include: 
+
+> 搭建流程
+
+![](/assets/DNS服务器搭建过程.png)
+
+* 用到的一些命令及基说明
+
+```ZSH
+shell> mv /etc/named.conf /etc/named.conf.backup
+shell> cp /etc/named.conf.backup /etc/named.conf -p
+shell> named-checkconfig
+shell> named-checkzone "." /var/named/named.ca
+# named-checkzone "zone name" filename
+shell> named-checkzone "localhost" /var/named/named.localhost
+shell> named-checkzone "loopback" /var/named/named.loopback
+shell> getenforce # 确认selinux是否开启,开启的话要关闭
+shell> setenforce 0 # 临时性的关闭selinux
+shell> servcie named start
+shell> tail /var/log/message
+shell> netstat -npl#p父进程id/l列表/n以ip:port形式显示进程/t:tcp/u:udp
+shell> ping www.baidu.com # 能ping能表示服务器搭建成功
+shell> dig -t "RT" "ZONE NAME"
+shell> dig -t NS	xpercent.me
+shell> dig -t A www.xpercent.me.
+shell> dig -t MX mail.xpercent.me.
+shell> dig -x IP
+
+# dig: domain information gropher,在域名服务器系统中查看相关信息
+shell> dig -t NS . # 查找要域的所有DNS服务器,前提是运行dig进程的主机必须要能访问互联网
+shell> dig -t NS . @A.ROOT-SERVERS.NET. # 直接通过A.ROOT-SERVERS.NET.这个域查找根域的信息
+```
+
+* DNS服务器配置文件 /etc/named.conf
+
+```js
+options {
+	directory "/var/named";
+};
+
+zone "." IN {
+	type hint;
+	file "named.ca";
+};
+
+zone "localhost" IN {
+	type master;
+	file "named.localhost";
+};
+
+zone "loopback" IN {
+	type master;
+	file "named.loopback";
+};
+
+zone "xpercent.me" IN {
+	type master;
+	file "xpercent.me.zone";
+};
+
+zone "55.211.10.in-addr.arpa" IN {
+	type master;
+	file "10.211.55.zone";
+};
+```
+
+* 正向区域文件 /var/named/xpercent.me.zone
+
+```ZSH
+$TTL 86400;
+
+@	IN	SOA	ns1.xpercent.me.	admin.xpercent.me. (
+					201706241800
+					1H
+					5M
+					1W
+					1D )
+	IN	NS	ns1
+	IN	MX  10	mail
+ns1 IN A	10.211.55.1
+www	IN	A	10.211.55.1
+mail	IN	A	10.211.55.2
+www	IN	A	10.211.55.3
+ftp	IN	CNAME	www
+```
+
+* 反向区域文件 /var/named/10.211.55.1.zone
+
+```ZSH
+$TTL 86400;
+
+@	IN	SOA	ns1.xpercent.me.	admin.xpercent.me. (
+					201706241800
+					1H
+					5M
+					1W
+					1D )
+	IN	NS	ns1.xpercent.me. ; 这里的FQDN必须写到`.`,
+1	IN	PTR	www.xpercent.me.
+2	IN	PTR	mail.xpercent.me.
+3	IN	PTR	www.xpercent.me.
+
+```
+
+* /etc/resolv.conf
+
+```ZSH
+# 这里的nameserver必须指向一台可以联网的主机
+nameserver 10.211.55.200
+```
+
+* 测试一下
+
+```ZSH
+# 正向测试
+[root@os1 named]# dig -t A www.xpercent.me
+
+; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.el6_9.2 <<>> -t A www.xpercent.me
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 55993
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 1, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;www.xpercent.me.		IN	A
+
+;; ANSWER SECTION:
+www.xpercent.me.	86400	IN	A	10.211.55.1
+www.xpercent.me.	86400	IN	A	10.211.55.3
+
+;; AUTHORITY SECTION:
+xpercent.me.		86400	IN	NS	www.xpercent.me.
+
+;; Query time: 0 msec
+;; SERVER: 10.211.55.200#53(10.211.55.200)
+;; WHEN: Sat Jun 24 07:52:18 2017
+;; MSG SIZE  rcvd: 79
+
+# 反向测试
+[root@os1 named]# dig -x 10.211.55.1
+
+; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.el6_9.2 <<>> -x 10.211.55.1
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 50309
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 1
+
+;; QUESTION SECTION:
+;1.55.211.10.in-addr.arpa.	IN	PTR
+
+;; ANSWER SECTION:
+1.55.211.10.in-addr.arpa. 86400	IN	PTR	www.xpercent.me.
+
+;; AUTHORITY SECTION:
+55.211.10.in-addr.arpa.	86400	IN	NS	ns1.xpercent.me.
+
+;; ADDITIONAL SECTION:
+ns1.xpercent.me.	86400	IN	A	10.211.55.1
+
+;; Query time: 0 msec
+;; SERVER: 10.211.55.200#53(10.211.55.200)
+;; WHEN: Sat Jun 24 08:48:14 2017
+;; MSG SIZE  rcvd: 105
+```
+
 
 ### ISO的OSI七层模型 {#ISO的OSI七层模型}
 
