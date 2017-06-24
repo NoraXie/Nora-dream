@@ -145,7 +145,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 
 所有域中的主机都有自己的角色,比如有的是邮件服务器,有的是www的服务器等等.
 
-在数据库中的每一个条目叫作一个资源记录,每条记录中的RRT(资源记录类型)字段用以区分这条记录最终要转换成什么.格式:
+在数据库中的每一个条目叫作一个资源记录,每条记录中的RRT\(资源记录类型\)字段用以区分这条记录最终要转换成什么.格式:
 
 ```csh
 $TTL 600;
@@ -154,7 +154,7 @@ www.baidu.com                       IN    A      1.1.1.1
 1.1.1.1                             IN    PTR    www.baidu.com
 ```
 
-#### 资源记录类型RRT {#资源记录类型RRT}
+##### 资源记录类型RRT
 
 用来表示这条记录要解析的值在DNS内部是什么角色.
 
@@ -164,6 +164,7 @@ www.baidu.com                       IN    A      1.1.1.1
 * MX
 * WWW
 * PTR
+* @: 用来表示域名zone name
 
 > A记录
 
@@ -181,6 +182,8 @@ www.baidu.com. ---> 2001:503:ba3e::2:30
 
 > NS记录
 
+在一个zone内,允许有多台NS服务器,而这些服务器的主从关系是通过配置文件加以区分.
+
 ```zsh
 Zone Name      ---> FQDN
 
@@ -189,9 +192,22 @@ ns1.baidu.com. ---> 119.75.213.61(A记录)
 
 ZoneName      TTL    IN    RRT   VALUE     
 baidu.com.    600    IN    NS    ns1.baidu.com.
+ns1.baidu.com.600    IN    A     1.1.1.1 
 ```
 
-> MX\(Mail Exchanger\)记录.邮件服务主机名
+> SOA:起始授权记录
+
+由于一个zone内,允许有多台NS服务器,主从之间如何同步数据,以及起始授权对象是谁.
+
+```zsh
+$TTL 600;
+ZONE NAME    IN    MASTER FQDN    RRT    ADMINISTRATOR_MAILBOX
+baidu.com    IN            
+```
+
+> MX\(Mail Exchanger\)
+
+最终指向某个域内邮件服务器的主机名,一般会有多台,由优先级字段决定使用中的是哪台.优先级从0-99,数字越小优先级越高.  同时也要像NS一样,要给出这台邮件服务器对应的A记录,以告诉请求者这台服务器的IP地址.
 
 ```zsh
 ZONE NAME      ---> FQDN
@@ -199,6 +215,13 @@ ZONE NAME      ---> FQDN
 ZONE NAME         TTL     IN    RRT    PRI    VALUE
 baidu.com.        600     IN    MX     10     mail.baidu.com.
 mail.baidu.com.   600     IN    A             1.1.1.1
+```
+
+> PTR记录
+
+```zsh
+IP             ---> FQDN
+1.1.1.1    600    IN    PTR    www.baidu.com
 ```
 
 ### ISO的OSI七层模型 {#ISO的OSI七层模型}
