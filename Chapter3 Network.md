@@ -423,27 +423,22 @@ shell> dig -t NS . @A.ROOT-SERVERS.NET. # 直接通过A.ROOT-SERVERS.NET.这个�
 options {
 	directory "/var/named";
 };
-
 zone "." IN {
 	type hint;
 	file "named.ca";
 };
-
 zone "localhost" IN {
 	type master;
 	file "named.localhost";
 };
-
 zone "loopback" IN {
 	type master;
 	file "named.loopback";
 };
-
 zone "xpercent.me" IN {
 	type master;
 	file "xpercent.me.zone";
 };
-
 zone "55.211.10.in-addr.arpa" IN {
 	type master;
 	file "10.211.55.zone";
@@ -454,27 +449,25 @@ zone "55.211.10.in-addr.arpa" IN {
 
 ```ZSH
 $TTL 86400;
-
-@	IN	SOA	ns1.xpercent.me.	admin.xpercent.me. (
+@			IN		SOA	ns1.xpercent.me.		admin.xpercent.me. (
 					201706241800
 					1H
 					5M
 					1W
 					1D )
-	IN	NS	ns1
-	IN	MX  10	mail
-ns1 IN A	10.211.55.1
-www	IN	A	10.211.55.1
-mail	IN	A	10.211.55.2
-www	IN	A	10.211.55.3
-ftp	IN	CNAME	www
+			IN		NS      	ns1
+			IN		MX  10		mail
+ns1			IN		A			10.211.55.1
+www			IN		A			10.211.55.1
+mail		IN		A			10.211.55.2
+www			IN		A			10.211.55.3
+ftp			IN		CNAME		www
 ```
 
 * 反向区域文件 /var/named/10.211.55.1.zone
 
 ```ZSH
 $TTL 86400;
-
 @	IN	SOA	ns1.xpercent.me.	admin.xpercent.me. (
 					201706241800
 					1H
@@ -500,7 +493,6 @@ nameserver 10.211.55.200
 ```ZSH
 # 正向测试
 [root@os1 named]# dig -t A www.xpercent.me
-
 ; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.el6_9.2 <<>> -t A www.xpercent.me
 ;; global options: +cmd
 ;; Got answer:
@@ -524,7 +516,6 @@ xpercent.me.		86400	IN	NS	www.xpercent.me.
 
 # 反向测试
 [root@os1 named]# dig -x 10.211.55.1
-
 ; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.el6_9.2 <<>> -x 10.211.55.1
 ;; global options: +cmd
 ;; Got answer:
