@@ -1,12 +1,12 @@
-### \# table of co
 
-### 参考资料
+
+### 参考资料 {#top}
 
 > 参考视频
 
 SPOTO ccna培训视频
 
-#### DNS解析及DNS服务器的搭建
+#### DNS解析及DNS服务器的搭建 {#second}
 
 ##### 什么是DNS
 
@@ -196,11 +196,11 @@ baidu.com.     600    IN    MX     10     mail.baidu.com.
 mail.baidu.com.600    IN    A             1.1.1.1
 ```
 
-### ISO 的 OSI 七层模型
+### ISO 的 OSI 七层模型 {#third}
 
 ![](/assets/OSI七层模型.png)
 
-### 数据在网络中传输时封装
+### 数据在网络中传输时封装 {#fourth}
 
 ![](/assets/数据封装.png)
 
