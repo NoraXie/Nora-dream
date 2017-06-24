@@ -1,11 +1,13 @@
-# TABLE OF CONTENT
-- [参考资料](#参考资料)
-- [DNS解析及DNS服务器的搭建](#DNS解析及DNS服务器的搭建)
-  - [什么是DNS](#什么是DNS)
-  - [DNS服务器](#DNS服务器)
-  - [DNS主机角色](#DNS主机角色)
-- [ISO的OSI七层模型](#ISO的OSI七层模型)
-- [数据在网络中传输时封装](#数据在网络中传输时封装)
+### 目录
+
+* [参考资料](#参考资料)
+* [DNS解析及DNS服务器的搭建](#DNS解析及DNS服务器的搭建)
+  * [什么是DNS](#什么是DNS)
+  * [DNS服务器](#DNS服务器)
+  * [DNS主机角色](#DNS主机角色)
+  * [资源记录类型RRT](#资源记录类型RRT)
+* [ISO的OSI七层模型](#ISO的OSI七层模型)
+* [数据在网络中传输时封装](#数据在网络中传输时封装)
 
 ### 参考资料 {#参考资料}
 
@@ -68,18 +70,14 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 * Server: 由发送的请求目标主机在服务器端更新,之后将目标主机名对应的IP发送给客户端
   * 当时的条件,请求达到1KW条时,导致服务器不堪重负,查询也慢.
 * 分布式数据库
-
   * 按Level管理域名
   * 自顶向下为: 根,顶级,二级...
   * 上级仅知道其直接下级
   * 下级仅知道根的位置
-
-* * 按Level管理域名
+  * 按Level管理域名
   * TLD\(Top Level Domain\)
-
     * 组织域: .com, .org, .net, .cc
     * 国家域: .cn, .jp, .hk, .tw, .ca, .iq
-
     * 反向域: IP---&gt;FQDN
 
 但随着互联网中主机数量增大,后来民间成立了一个ICANN替代了IANA的作用.
@@ -129,7 +127,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
   * refresh: 多长时间检查一次MASTER的版本号
   * retry: 重试时间
   * expire: 认为MASTER挂掉的时间
-  * negative answer TTL: 否定答案有效时长
+  * negative answer TTL: 否定答案缓存时长
 
 > 缓存DNS服务器
 
@@ -147,7 +145,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 
 所有域中的主机都有自己的角色,比如有的是邮件服务器,有的是www的服务器等等.
 
-在数据库中的每一个条目叫作一个资源记录,用以区分不同的主机角色.格式:
+在数据库中的每一个条目叫作一个资源记录,每条记录中的RRT(资源记录类型)字段用以区分这条记录最终要转换成什么.格式:
 
 ```csh
 $TTL 600;
@@ -156,7 +154,7 @@ www.baidu.com                       IN    A      1.1.1.1
 1.1.1.1                             IN    PTR    www.baidu.com
 ```
 
-> 资源记录类型RRT
+#### 资源记录类型RRT {#资源记录类型RRT}
 
 用来表示这条记录要解析的值在DNS内部是什么角色.
 
@@ -189,18 +187,18 @@ Zone Name      ---> FQDN
 baidu.com.     ---> ns1.baidu.com.(NS记录)
 ns1.baidu.com. ---> 119.75.213.61(A记录)
 
-ZoneName    TTL    IN    RRT    
+ZoneName      TTL    IN    RRT   VALUE     
 baidu.com.    600    IN    NS    ns1.baidu.com.
 ```
 
-> MX\(Mail Exchanger\)记录
+> MX\(Mail Exchanger\)记录.邮件服务主机名
 
 ```zsh
 ZONE NAME      ---> FQDN
 
-ZONE NAME     TTL     IN    RRT    PRI    VALUE
-baidu.com.     600    IN    MX     10     mail.baidu.com.
-mail.baidu.com.600    IN    A             1.1.1.1
+ZONE NAME         TTL     IN    RRT    PRI    VALUE
+baidu.com.        600     IN    MX     10     mail.baidu.com.
+mail.baidu.com.   600     IN    A             1.1.1.1
 ```
 
 ### ISO的OSI七层模型 {#ISO的OSI七层模型}
