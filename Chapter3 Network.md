@@ -26,7 +26,7 @@ SPOTO ccna培训视频
 
 #### 网络通信安全问题 {#网络通信安全问题}
 
-Alice与Bob通过互联网中的两台主机建立通信.这两台从未建立过连接的主机之间通信,存在哪些问题?
+A与B通过互联网中的两台主机建立通信.这两台从未建立过连接的主机之间通信,存在哪些问题?
 
 * 机密性:网络协议只支持明文传输数据
 * 完整性:数据可能在传输途中被修改
@@ -50,6 +50,14 @@ Alice与Bob通过互联网中的两台主机建立通信.这两台从未建立�
 
 这种方式能解决数据机密性问题,但无法保证密钥的有效管理.
 
+**常用算法**
+
+* DES: 56位密钥长度, 2000年被暴力破解
+* 3DES TRIPPLE DES:, 3次DES加密
+* AES: 高级加密标准,128位密钥
+	* AES192,AES256,AES512.
+* blowfish
+
 > 单向加密
 
 提取数据特征码(也叫消息摘要digest),从而保证数据完整性.特点
@@ -67,9 +75,17 @@ Alice与Bob通过互联网中的两台主机建立通信.这两台从未建立�
 * 特征码在传输过程中由于电气性问题导致传输到目标主机后不正确
 * 明文被修改了,最终接收方的数据也不正确
 
-因此单向加密只能解决**_数据完整性_**问题,却无法保证数据的机密性,同时还存在中间人攻击的问题.而要解决中间人攻击这种问题,这个过程中的特征码也需要加密后传输.
+因此单向加密只能解决**数据完整性**问题,却无法保证数据的机密性,同时还存在中间人攻击的问题.而要解决中间人攻击这种问题,这个过程中的特征码也需要加密后传输.
 
 但是两台主机如何约定密钥呢?如果要网络中传输,密钥也就不再机密了.但是双方还是要交换密钥,这需要网络协议支持,最早的协议叫Diff-hellman算法.这种交换有一个名称中Internet Key Exchange,即IKE.
+
+**常用的算法**
+
+* MD4
+* MD5
+* SHA1
+* SHA192,SHA256,SHA384: 这里的长度指的是输出
+* CRC-32: 循环冗余算法(这只是用来校验的,不提供安全性)
 
 > Diff-hellman算法
 
@@ -103,6 +119,12 @@ B在本地计算得到密钥: (g^yx)%p
 
 同时也发现,鱼与熊掌不可兼得.用对方公钥加密,可以保证数据机密性;用息私钥加密,可以保证数据发送方的身份.但是不能同时保证数据机密性,同时还能保证数据发送方的身份.这需要另一种机制保全鱼与熊掌.
 
+**常用算法**
+
+* RSA: 既可以加密,也可以签名
+* DSA: 只可以签名
+* Elgamal: 商业加密算法
+
 > 身份验证与完整性双保险
 
 A与C在互联网中通信,中间有个B总是时不时的截取A和C的通信数据,乱改一通后伪装成发送方.为防止B这样的Bitch,于是A与B决定这么做.
@@ -115,7 +137,7 @@ A首先将原数据提取出一段特征码,从而保证数据完整性.然后�
 
 若中间有B还截取了数据,由于特征码是用A的私钥加密的,于是B可以解密,之后要将窜改后的数据伪装成A发送给C时,只能用自己的私钥加密这段明文和特征码.于是C在接收时,用A的公钥无法解密,于是丢弃掉.
 
-> CA
+> CA: Certification Authority
 
 所有主机将自己的公钥发送给第三方机构,由这个机构对公钥做公证,以告诉接收方,这个公钥是合法且有效的.发证机构的权威性在于自己也有公钥私钥对,机构用自己的私钥将数据特征码加密,加密后的数据即证书.这个受大众信任的第三方机构叫CA,由CA颁发的证书即CA证书.
 
@@ -127,9 +149,29 @@ CA也拥有一个证书（内含公钥和私钥）。网上的公众用户通过
 
 证书的内容包括：电子签证机关的信息、公钥用户信息、公钥、权威机构的签字和有效期等等。目前，证书的格式和验证方法普遍遵循X.509 国际标准。
 
+> 数字签名和数字证书
+
+**数字签名**是指: 将通过单向加密算法提取的特征码(摘要)用私钥加密后的内容.
+
+![](/assets/数字签名过程.png)
+
+**数字证书**是指: 是用来证明A就是A,不是别人伪装而成.证明方式即: CA用自己的私钥将发送方A的公钥及相关信息加密生成**数字证书**,接收方B通过CA的公钥解密来验证A就是A.
+
+![](/assets/数字证书认证过程.png)
+
+对于B/S架构的WEB服务,https请求可以这么来看.
+
+Server端需要在建站时就去CA申请一个合法的数字证书,这个证书由第三方机构CA用自己的私钥对Server的域名,公钥,证书有效期等加密后生成.
+
+Client发出HTTPS请求,Server将自己的网页内容提取特征码,并用自己的私钥加密生成数字签名,然后Server用对称加密算法(或是其它加密方式)将网页内容加密生成密文,最后将密文与数字证书一起发给Client.
+
+Client(一般是浏览器)在自己的受信任CA列表中找到相应的公钥,如果可以解密数字证书,则表示这个Server的确是我要访问的那个站点,不是骗子写的假网站.第二步,用对称密钥解密数据,得到网页内容与数字证书.自己根据网页内容计算特征码2.第三步,将第一步解密后拿到的Server的公钥解密数字证书得到原始特征码1.对比两个特征码,以验证数据完整性.
+
+整个过程,数据机密性,服务者身份以及数据完整性一气呵成.
+
 > CA证书的作用
 
-_**1 验证网络是否可信**_
+**1 验证网络是否可信**
 
 通常，我们如果访问某些敏感的网页（比如用户登录的页面），其协议都会使用HTTPS而不是HTTP。因为HTTP协议是明文的，一旦有坏人在偷窥你的网络通讯，他/她就可以看到网络通讯的内容（比如你的密码、银行帐号、等）；而HTTPS是加密的协议，可以保证你的传输过程中，坏蛋无法偷窥。
 
@@ -139,19 +181,9 @@ _**1 验证网络是否可信**_
 
 有了证书之后，当你的浏览器在访问某个HTTPS网站时，会验证该站点上的CA证书（类似于验证介绍信的公章）。如果浏览器发现该证书没有问题（证书被某个根证书信任、证书上绑定的域名和该网站的域名一致、证书没有过期），那么页面就直接打开；否则的话，浏览器会给出一个警告，告诉你该网站的证书存在某某问题，是否继续访问该站点？
 
-**_2 验证文件是否可信_**
+**2 验证文件是否可信**
 
 目前大多数知名的公司（或组织机构），其发布的可执行文件（比如软件安装包、驱动程序、安全补丁），都带有数字签名。
-
-> 数字签名和数字证书
-
-**_数字签名_**是指: 将通过单向加密算法提取的特征码(摘要)用私钥加密后的内容.
-
-![](/assets/数字签名过程.png)
-
-**_数字证书_**是用来确认A就是A,不是别人伪装而成的文件.
-
-![](/assets/数字证书认证过程.png)
 
 > PKI
 
@@ -165,7 +197,10 @@ PKI主要包括四个部分：X.509格式的证书（X.509 V3）和证书废止�
 4. Web安全通信平台. Web有Web Client端和Web Server端两部分，分别安装在客户端和服务器端，通过具有高强度密码算法的SSL协议保证客户端和服务器端数据的机密性、完整性、身份验证。
 5. 自开发安全应用系统.自开发安全应用系统是指各行业自开发的各种具体应用系统，例如银行、证券的应用系统等。完整的PKI包括认证政策的制定（包括遵循的技术标准、各CA之间的上下级或同级关系、安全策略、安全程度、服务对象、管理原则和框架等）、认证规则、运作制度的制定、所涉及的各方法律关系内容以及技术的实现等。
 
-#### Openssl
+
+#### OpenSSL {#openssl}
+
+PKI的一种实现就是SSL/TLS,SSL的证书格式使用X509.
 
 > SSL是什么
 
@@ -175,16 +210,403 @@ TLS与SSL的不同在于,TLS是国际标准化组织维护,是一个完全开放
 
 > SSL会话
 
-HTTP协议是基于TCP的,因此需要三次握手,之后要走SSL.
+HTTP协议是基于TCP的,因此需要三次握手,之后要走SSL.  
+**Step0:** TCP三次握手  
+**Step1:** Client发起请求到Server.     
+**Step2:**Server与Client双方约定彼此支持的加密算法与安全协议版本.  
+**Step3:** Server将自己的CA证书发送给Client  
+**Step4:** Client用CA公钥解密证书并验证证书的完整性.随机生成一个密钥,并用证书中携带的Server公钥加密后发送给Server,以约定对称加密解密使用的密钥.  
+**Step5:** Server用Step4中接收的密钥加密http数据包后发送给Client.  
+**Step6:** Client用密钥解密数据包.
 
-Step1: Client发起请求到Server.
-Step2: Server与Client
+> OpenSSL
 
+[OpenSSL](www.openssl.org)是Linux提供对称加密算法的工具.它由三部分组成.
 
+* libcrypto: 加密算法库
+* libssl: ssl协议实现库,基于ssl会话实现身份认证,数据机密性与完整性.
+* openssl: 命令行工具,可以实现私有证书颁发机构.
 
-#### DNS解析及DNS服务器的搭建 {#DNS解析及DNS服务器的搭建}
+为什么要实现私有颁发机构?可以用来在公司内部建立证书颁发机构.
 
-##### 什么是DNS {#什么是DNS}
+> OpenSSL实现私有CA
+
+* Step1: 生成一对密钥
+* Step2: 把公钥生成证书
+
+**常用命令**
+
+```ZSH
+rpm -qa | grep openssl
+rpm -ql openssl
+openssl version
+openssl ?
+openssl speed [算法名称|DES3]
+whatis passwd
+man sslpasswd
+# enc - symmetric cipher routines对称加密规则
+man enc [算法名称] [-in 从哪个文件读] [-out 输出到哪个文件]
+# 对inittab进行base64编码后,用des对inittab加密
+openssl enc -des -salt -a -in inittab -out inittab.des
+openssl enc -des -d -salt -a  -in inittab.des -out inittab
+openssl dgst -sha [filename] #提取特征码(摘要,指纹等)
+# 生成rsa 密钥对
+openssl genrsa [numbits] 
+# 用子shell生成文件权限为600,目录权限为700的文件,且文件中写的是长度为2048位的rsa私钥,文件名为server1024.key
+(umask 077; openssl genrsa -out server1024.key 2048)
+# 从server1024.key文件中提取公钥
+openssl rsa -in server1024.key -pubout
+man req
+# 生成证书
+openssl req -new -x509 -key server1024.key -out server.crt -days 365
+# 查看证书内容
+openssl x509 -text -in server.crt
+```
+
+**准备工作**  
+`/etc/pki/tls/openssl.cnf`   
+这是openssl的配置文件,建私有CA时用.在这里要进行一些配置. 
+ 
+```ZSH
+cd /etc/pki/CA
+mkdir certs newcerts crl
+touch index.txt
+touch serial
+echo 01 > serial
+```
+
+**Step1** 生成一对密钥 
+
+```ZSH
+cd /etc/pki/CA
+(umask 077; openssl genrsa -out private/cakey.pem 2048)
+```  
+**Step2** 生成证书 
+
+```ZSH
+cd /etc/pki/CA
+openssl req -new -x509 -key private/cakey.pem -out cacert.pem
+```
+
+**Step3** 用httpd服务申请一个证书
+
+```ZSH
+# 生成密钥
+[root@os1 data]# (umask 077; openssl genrsa -out httpdkey.pem 2048)
+Generating RSA private key, 2048 bit long modulus
+............................................+++
+...................................................+++
+e is 65537 (0x10001)
+# 填写申请书,附上自己的公钥,组织机构,个人联系方式,公司域名等信息,最后生成csr文件
+# csr: Certificate Signiture Request
+[root@os1 data]# openssl req -new -key httpdkey.pem -out httpd.csr
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [CN]:
+State or Province Name (full name) [beijing]:
+Locality Name (eg, city) [beijing]:
+Organization Name (eg, company) [nora.inc]:
+Organizational Unit Name (eg, section) [tech]:
+Common Name (eg, your name or your server's hostname) []:www.xpercent.nora.com
+Email Address []:admin@nora.com
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+
+# 将csr请求文件发送给CA服务器(目前在一台主机上,正常是在不同主机上,要进行文件传输)
+
+# CA根据csr请求生成一个证书
+[root@os1 data]# openssl ca -in httpd.csr -out httpd.crt -days 365
+Using configuration from /etc/pki/tls/openssl.cnf
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+        Serial Number: 1 (0x1)
+        Validity
+            Not Before: Jun 24 23:30:42 2017 GMT
+            Not After : Jun 24 23:30:42 2018 GMT
+        Subject:
+            countryName               = CN
+            stateOrProvinceName       = beijing
+            organizationName          = nora.inc
+            organizationalUnitName    = tech
+            commonName                = www.xpercent.nora.com
+            emailAddress              = admin@nora.com
+        X509v3 extensions:
+            X509v3 Basic Constraints:
+                CA:FALSE
+            Netscape Comment:
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier:
+                FE:DD:47:7C:99:51:54:E2:C1:A4:70:EF:A6:11:8D:D3:FC:34:AB:DF
+            X509v3 Authority Key Identifier:
+                keyid:38:38:72:C4:83:45:FE:1E:2E:76:F8:11:8B:7A:F0:22:22:5D:9B:97
+
+Certificate is to be certified until Jun 24 23:30:42 2018 GMT (365 days)
+Sign the certificate? [y/n]:y
+1 out of 1 certificate requests certified, commit? [y/n]y
+Write out database with 1 new entries
+Data Base Updated
+
+# 查看一下其它文件的变化 
+[root@os1 data]# cat /etc/pki/CA/index.txt
+V	180624233042Z		01	unknown	/C=CN/ST=beijing/O=nora.inc/OU=tech/CN=www.xpercent.nora.com/emailAddress=admin@nora.com
+[root@os1 data]# cat /etc/pki/CA/serial
+02
+
+```
+
+**命令演示结果**
+
+```ZSH
+[root@os1 ~]# openssl speed des
+Doing des cbc for 3s on 16 size blocks: 12135926 des cbc's in 3.00s
+Doing des cbc for 3s on 64 size blocks: 3111694 des cbc's in 3.00s
+Doing des cbc for 3s on 256 size blocks: 780776 des cbc's in 2.99s
+Doing des cbc for 3s on 1024 size blocks: 195431 des cbc's in 3.00s
+Doing des cbc for 3s on 8192 size blocks: 24502 des cbc's in 3.00s
+Doing des ede3 for 3s on 16 size blocks: 4568156 des ede3's in 3.00s
+Doing des ede3 for 3s on 64 size blocks: 1158206 des ede3's in 3.00s
+Doing des ede3 for 3s on 256 size blocks: 290987 des ede3's in 3.00s
+Doing des ede3 for 3s on 1024 size blocks: 72260 des ede3's in 3.00s
+Doing des ede3 for 3s on 8192 size blocks: 8958 des ede3's in 3.00s
+OpenSSL 1.0.1e-fips 11 Feb 2013
+built on: Mon May  9 09:54:24 CDT 2016
+options:bn(64,64) md2(int) rc4(16x,int) des(idx,cisc,16,int) aes(partial) idea(int) blowfish(idx)
+compiler: gcc -fPIC -DOPENSSL_PIC -DZLIB -DOPENSSL_THREADS -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -DKRB5_MIT -m64 -DL_ENDIAN -DTERMIO -Wall -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic -Wa,--noexecstack -DPURIFY -DOPENSSL_IA32_SSE2 -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_MONT5 -DOPENSSL_BN_ASM_GF2m -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM -DMD5_ASM -DAES_ASM -DVPAES_ASM -DBSAES_ASM -DWHIRLPOOL_ASM -DGHASH_ASM
+The 'numbers' are in 1000s of bytes per second processed.
+type             16 bytes     64 bytes    256 bytes   1024 bytes   8192 bytes
+des cbc          64724.94k    66382.81k    66849.05k    66707.11k    66906.79k
+des ede3         24363.50k    24708.39k    24830.89k    24664.75k    24461.31k
+=====================================================================
+[root@os1 ~]# openssl enc -des -salt -a -in inittab -out inittab.des
+enter des-cbc encryption password:
+Verifying - enter des-cbc encryption password:
+[root@os1 ~]# cat inittab.des
+U2FsdGVkX1//0nGfv2OsPDBRiiolKFBqCLXseR0Cgev6OAm51eVf8wY80Hm24aHF
+T3Oi4XfyUm46dhHB6MYXOTTsRPy4+DFP0V9C7KLHLdeaO5WsaOpfnL5CYYnddJpb
+Rax5edd/4d6CROXK8UizwaIZX9HwFPnc3XrUO+DZ9NUaN9Db+JP6Vmk1gWH1H2xk
+bocO+uAtc1dxc7eRxPbXTPd+XlrSeMwwDiuGoknP/8gzXHGLnRQnSheMVzmfwQ4R
+VygJtkA3hYnS1ZrnCN0WOiNbjrTWXUqMhqGULT7VGjWiFi/817iZYKETJNEVx4Jf
+71yM169hlSzsUfQzP04d9Z8H3HTp/8/yIgDeDSjrLnazto4dWn24grS9fODaES+s
+IlORzW9iBgFOuu/Wmw3wIF9F4JwjraTB4vyDN8HmQxIq3YDOYQ+/7uQvozgE4750
+W9vlNpVsSY6NzMr+xQv5f2di+idYCsfg8QmeOi4S+raCfsq06VSbetPD9QfEfCkl
+E3LHsjQ6amcr85wg1SxMOxC1eP7vu4kxot7zVmtOLKLx01vOVrB327CV6ySWExAj
+Vp7HN6Z3CWsffiZ0r4+hq9J5lpKvz3YmRbtlqMOxt1rNSweU9aIbM61t0VcgYSQb
+f+FtMiYZ2DnJRD7II3T5WS7adK4GM+ioP8qATqDu7ikzv1aQz2R3uLvh7OoURxv/
+N16mnf3p4hyhowtKQBoY2LkeUNx/QIJDzNjplBUwACskuNbmISOmdFsHOBN7D6m7
+nvQ5Efsek3kqK3IlsYldiFQbOOJroFvDa4fy1AMM9hOa1GC4ew0zIcixSUbPH0mf
+RLUSQg1FNB4qs4tiApbrrI1vo1eHgOrg4Xn0Ef4T1c59a0NGAsK841/tw/jQXCWU
+ZQsJCWz1zbBcL2Ieb4Ya+tXqel5dupF9LypwFl6vSFIMiQRGvZ/qpoqHIebwEA8p
+646zl/hG/7xqeN4WGKVehiqB2ERaJgiXOA35nrLLTDNJ7KsDOdUepclej1pbqWnm
+6XTntOS3risapkhGzbYb/CgDwy+o9BBw+VuYkV9HePEnWoqCa9GPrHfLx79pWEmt
+opPn/aP5BJoP46Mou06vTgCTgLMktFR11DY1cclNNPMG1wzMtI4RavzYZgjp/YXy
+Mtj1uIIy3mMi8KwmHK4A7Rf+jXZr3z8c/LGkxq+th64sjegMKUzIQA==
+=====================================================================
+[root@os1 ~]# openssl enc -des -d -salt -a  -in inittab.des -out inittab
+enter des-cbc decryption password:
+[root@os1 ~]# cat inittab
+# inittab is only used by upstart for the default runlevel.
+#
+# ADDING OTHER CONFIGURATION HERE WILL HAVE NO EFFECT ON YOUR SYSTEM.
+#
+# System initialization is started by /etc/init/rcS.conf
+#
+# Individual runlevels are started by /etc/init/rc.conf
+#
+# Ctrl-Alt-Delete is handled by /etc/init/control-alt-delete.conf
+#
+# Terminal gettys are handled by /etc/init/tty.conf and /etc/init/serial.conf,
+# with configuration in /etc/sysconfig/init.
+#
+# For information on how to write upstart event handlers, or how
+# upstart works, see init(5), init(8), and initctl(8).
+#
+# Default runlevel. The runlevels used are:
+#   0 - halt (Do NOT set initdefault to this)
+#   1 - Single user mode
+#   2 - Multiuser, without NFS (The same as 3, if you do not have networking)
+#   3 - Full multiuser mode
+#   4 - unused
+#   5 - X11
+#   6 - reboot (Do NOT set initdefault to this)
+#
+id:3:initdefault:
+=====================================================================
+[root@os1 ~]# openssl genrsa 1024
+Generating RSA private key, 1024 bit long modulus
+.........................................++++++
+...................................................................................++++++
+e is 65537 (0x10001)
+-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDfm81Mc6/7m6X7EdgamGSGW8/1lMw9r+f28Bwvit9iqERFHr9p
+no9SyxzIC3swHfJtzHvH71oFS5sx0qDbHa83P+Sr3Q6xe6fzfmdTd+kgjL3cPnvQ
+8Zw/TCXhqYA3FgU/T7GcABL0FDGEtlhyWytw85yCmRlc1978I5nHQUiZnwIDAQAB
+AoGAYbtTC6s0q5/n98hgz57zsNXIGuoiKoQLup5Pc2gbIp+w1xUNTDiFJAaqWbTK
+7sjoAJ1zLHusuMvG1QveSma7AXV/QBcIVum4OuNXdVNYTamskVipgrDcHMOe9uE+
+Y54jrBlwCplFBw1wHA17t1kbAG0xqGNLLKkOz1cRK/HTi8ECQQD7i4SQcobmgbCy
+TAqoNiasD+FW7s55DtHdbTi9iFlvDyb+N9CdFixH0mceLrnZXq4VOOOXL5ryEio4
+KllVWs3HAkEA45GfgN8bcTqrFN74NSQKsqaEa7CoSk2+Xv59zm2UilUh0VBKEfKE
+fw2zjEvakZR6cGfuwWPFE8c9VEh4uhA1aQJBAN0CFyYGygnK1uHAt/hVI6M3jKgh
+x51LbQ6cgSbdnp5adMsVZSAvtBYigeFd8oJOkqsowaY6+GtJlHimlLjOwE8CQHxE
+CdBqhGa5PbDA7NK/4qOZcFgJ+GvStjDTUUmG5wT+5d+Rs1DHmHh0t+XVif3TEWUO
+K/8ohvZ85s1+YYZg0XkCQE5HJTzuDCfnofNclJCn95UZ1EECyAig6GV4s9tI1YVV
+GaUWCG23VQqRJ+4r9ac7n0nssp6AgolGWbyoFWhjROE=
+-----END RSA PRIVATE KEY-----
+=====================================================================
+[root@os1 ~]# (umask 077; openssl genrsa -out server1024.key 2048)
+Generating RSA private key, 2048 bit long modulus
+...........+++
+..............+++
+e is 65537 (0x10001)
+=====================================================================
+[root@os1 ~]# openssl rsa -in server1024.key -pubout
+writing RSA key
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1JdhTaaEhnedzcysImCk
+f0xBFwV9Sqf25sswFqc5ztPltXLAYvWIlnQO4NOr9lhdkhWrpGKLGcirdctPw/LY
+cvWu97d/vUQbblZ+wfnbHK1prv2eypoitajlKywdSl4kKbmwF/FSlA0KkO7wHcck
+fBLHlBvGd03BHfxeHeEQRRvlzBt5F739T0tEQhus5fTPBzdm+bZ9ngVMtC9ELHMc
+V9Hlo8BQjjVUFX+igqRTglOwzC79xZxz8DRjIHG82ZY9feuqDbzoYUNb+Q1fzf56
+sMDEv7vLGZVOuR/q08RMqeW/VT1p+3xpMy9WjuPJ9x2bVCDnv40fe4NCcTsX1yx5
+RwIDAQAB
+-----END PUBLIC KEY-----
+=====================================================================
+[root@os1 CA]# (umask 077; openssl genrsa -out private/cakey.pem 2048)
+Generating RSA private key, 2048 bit long modulus
+.........+++
+........+++
+e is 65537 (0x10001)
+[root@os1 CA]# ll
+total 20
+drwxr-xr-x. 2 root root 4096 May  9  2016 certs
+drwxr-xr-x. 2 root root 4096 May  9  2016 crl
+-rw-r--r--. 1 root root    0 Jun 25 07:16 index.txt
+drwxr-xr-x. 2 root root 4096 May  9  2016 newcerts
+drwx------. 2 root root 4096 Jun 25 07:18 private
+-rw-r--r--. 1 root root    3 Jun 25 07:16 serial
+[root@os1 CA]# ll private/
+total 4
+-rw-------. 1 root root 1675 Jun 25 07:18 cakey.pem
+[root@os1 CA]# openssl req -new -x509 -key private/cakey.pem -out cacert.pem
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [CN]:
+State or Province Name (full name) [beijing]:
+Locality Name (eg, city) [beijing]:
+Organization Name (eg, company) [nora.inc]:
+Organizational Unit Name (eg, section) [tech]:
+Common Name (eg, your name or your server's hostname) []:nora.tech
+Email Address []:adminnora@nora.com
+[root@os1 CA]# ll
+total 24
+-rw-r--r--. 1 root root 1415 Jun 25 07:20 cacert.pem
+drwxr-xr-x. 2 root root 4096 May  9  2016 certs
+drwxr-xr-x. 2 root root 4096 May  9  2016 crl
+-rw-r--r--. 1 root root    0 Jun 25 07:16 index.txt
+drwxr-xr-x. 2 root root 4096 May  9  2016 newcerts
+drwx------. 2 root root 4096 Jun 25 07:18 private
+-rw-r--r--. 1 root root    3 Jun 25 07:16 serial
+=====================================================================
+[root@os1 CA]# openssl x509 -text -in cacert.pem
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 16501759579344852429 (0xe50206e847bfd5cd)
+    Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=CN, ST=beijing, L=beijing, O=nora.inc, OU=tech, CN=nora.tech/emailAddress=adminnora@nora.com
+        Validity
+            Not Before: Jun 24 23:20:21 2017 GMT
+            Not After : Jul 24 23:20:21 2017 GMT
+        Subject: C=CN, ST=beijing, L=beijing, O=nora.inc, OU=tech, CN=nora.tech/emailAddress=adminnora@nora.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:f1:6b:fa:67:e6:36:da:af:97:d1:74:c2:e9:c8:
+                    3f:9d:bd:a2:0d:6e:43:56:47:a7:1d:80:18:df:b9:
+                    5a:0b:d9:1a:26:c7:13:19:02:40:08:44:43:c4:29:
+                    27:05:9d:98:27:95:b0:b3:27:86:93:5f:c5:3e:b2:
+                    b8:16:57:71:c7:c8:34:f1:b5:13:2f:00:fe:d6:40:
+                    3d:4c:11:e2:75:b6:4b:e7:b4:9b:08:3c:b0:85:65:
+                    27:97:da:a9:c6:30:e7:fe:c0:02:9e:21:b4:76:70:
+                    3b:f1:f6:5e:07:6d:7c:be:87:ec:0b:d6:dd:1e:58:
+                    5d:02:36:3a:e1:c1:44:f7:53:b0:b9:bd:7d:6e:e3:
+                    23:d2:1d:3a:dd:7c:f4:de:d7:dd:ba:92:cd:78:a5:
+                    b0:62:15:8d:e0:55:2f:13:04:b3:4d:90:3b:ed:44:
+                    a5:44:a1:c8:d4:63:70:24:e0:ef:52:b3:87:6a:21:
+                    de:25:db:92:6a:0b:a4:87:ef:b7:54:41:b6:66:fb:
+                    d4:5b:b4:9d:c7:80:bd:e3:da:4e:0b:83:70:a2:9e:
+                    bd:5a:09:7c:7e:3f:bc:67:9c:2e:d0:6a:cb:f8:67:
+                    f1:de:cd:7f:cb:45:19:8a:a3:bb:b9:2c:e2:93:f1:
+                    19:dd:f4:eb:59:db:17:fa:9a:36:ad:12:1e:8a:60:
+                    2a:a9
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier:
+                38:38:72:C4:83:45:FE:1E:2E:76:F8:11:8B:7A:F0:22:22:5D:9B:97
+            X509v3 Authority Key Identifier:
+                keyid:38:38:72:C4:83:45:FE:1E:2E:76:F8:11:8B:7A:F0:22:22:5D:9B:97
+
+            X509v3 Basic Constraints:
+                CA:TRUE
+    Signature Algorithm: sha1WithRSAEncryption
+         41:39:41:75:d0:5e:58:c9:4f:48:b3:d4:01:0a:19:ed:d7:34:
+         d8:d4:68:db:e2:aa:22:02:7d:3d:4e:50:ad:74:36:af:74:ac:
+         41:a9:f4:b6:52:ba:23:68:75:3b:a3:af:a4:d0:b1:30:3e:2e:
+         4e:c9:fd:5f:3f:84:b5:9c:ae:f5:a7:fa:99:e6:6d:d0:5e:9c:
+         5e:98:db:6a:54:63:36:ad:99:55:12:07:9b:b7:97:45:14:b3:
+         86:cb:6f:49:b6:cb:aa:36:e3:ac:d2:00:53:04:37:10:51:df:
+         eb:50:d4:a9:e9:03:bb:46:1c:89:00:d8:6a:da:ad:7b:98:51:
+         81:fe:99:3e:6b:5d:e4:21:7a:8e:71:dc:cb:80:66:ff:52:d4:
+         6c:b6:84:9f:8a:a8:58:90:85:de:00:66:eb:ea:ea:bb:bc:1f:
+         e3:a2:87:47:72:bf:2e:16:63:7c:96:cf:79:d2:ef:21:35:e3:
+         c1:18:2e:b8:b0:09:6d:7e:fc:ac:b2:df:1a:3d:01:de:73:9b:
+         cd:dc:e6:4f:50:53:3c:f7:11:ab:9a:c1:07:13:f1:cd:6e:d2:
+         af:7b:03:0d:90:dd:ca:cd:be:dc:60:05:4f:6c:d8:8b:6b:36:
+         9d:ed:39:09:c3:1b:5a:3d:9b:56:89:d9:ef:fb:12:c3:8b:57:
+         95:a4:5a:93
+-----BEGIN CERTIFICATE-----
+MIID6TCCAtGgAwIBAgIJAOUCBuhHv9XNMA0GCSqGSIb3DQEBBQUAMIGKMQswCQYD
+VQQGEwJDTjEQMA4GA1UECAwHYmVpamluZzEQMA4GA1UEBwwHYmVpamluZzERMA8G
+A1UECgwIbm9yYS5pbmMxDTALBgNVBAsMBHRlY2gxEjAQBgNVBAMMCW5vcmEudGVj
+aDEhMB8GCSqGSIb3DQEJARYSYWRtaW5ub3JhQG5vcmEuY29tMB4XDTE3MDYyNDIz
+MjAyMVoXDTE3MDcyNDIzMjAyMVowgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIDAdi
+ZWlqaW5nMRAwDgYDVQQHDAdiZWlqaW5nMREwDwYDVQQKDAhub3JhLmluYzENMAsG
+A1UECwwEdGVjaDESMBAGA1UEAwwJbm9yYS50ZWNoMSEwHwYJKoZIhvcNAQkBFhJh
+ZG1pbm5vcmFAbm9yYS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+AQDxa/pn5jbar5fRdMLpyD+dvaINbkNWR6cdgBjfuVoL2RomxxMZAkAIREPEKScF
+nZgnlbCzJ4aTX8U+srgWV3HHyDTxtRMvAP7WQD1MEeJ1tkvntJsIPLCFZSeX2qnG
+MOf+wAKeIbR2cDvx9l4HbXy+h+wL1t0eWF0CNjrhwUT3U7C5vX1u4yPSHTrdfPTe
+1926ks14pbBiFY3gVS8TBLNNkDvtRKVEocjUY3Ak4O9Ss4dqId4l25JqC6SH77dU
+QbZm+9RbtJ3HgL3j2k4Lg3Cinr1aCXx+P7xnnC7Qasv4Z/HezX/LRRmKo7u5LOKT
+8Rnd9OtZ2xf6mjatEh6KYCqpAgMBAAGjUDBOMB0GA1UdDgQWBBQ4OHLEg0X+Hi52
++BGLevAiIl2blzAfBgNVHSMEGDAWgBQ4OHLEg0X+Hi52+BGLevAiIl2blzAMBgNV
+HRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4IBAQBBOUF10F5YyU9Is9QBChnt1zTY
+1Gjb4qoiAn09TlCtdDavdKxBqfS2UrojaHU7o6+k0LEwPi5Oyf1fP4S1nK71p/qZ
+5m3QXpxemNtqVGM2rZlVEgebt5dFFLOGy29JtsuqNuOs0gBTBDcQUd/rUNSp6QO7
+RhyJANhq2q17mFGB/pk+a13kIXqOcdzLgGb/UtRstoSfiqhYkIXeAGbr6uq7vB/j
+oodHcr8uFmN8ls950u8hNePBGC64sAltfvysst8aPQHec5vN3OZPUFM89xGrmsEH
+E/HNbtKvewMNkN3Kzb7cYAVPbNiLazad7TkJwxtaPZtWidnv+xLDi1eVpFqT
+-----END CERTIFICATE-----
+
+```
+
+### DNS解析及DNS服务器的搭建 {#DNS解析及DNS服务器的搭建}
+
+#### 什么是DNS {#什么是DNS}
 
 > 域名
 
@@ -276,7 +698,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 
 这个文件中的nameserver IP必须是允许递归的服务器地址,而stub resolver又是一个要求必须有应答的递归请求.因些,一旦写成不允许递归的IP, stub resolver将得不到应答.
 
-##### DNS服务器 {#DNS服务器}
+#### DNS服务器 {#DNS服务器}
 
 不同的域名层级实际就是由一台一台的域名服务器组织起来的.
 
@@ -308,7 +730,7 @@ IANA负责维护主机名与IP地址的映射关系.IANA即互联网名称分配
 >
 > DNS服务器是由上级在数据库授权的
 
-##### DNS主机角色 {#DNS主机角色}
+#### DNS主机角色 {#DNS主机角色}
 
 所有域中的主机都有自己的角色,比如有的是邮件服务器,有的是www的服务器等等.
 
@@ -321,7 +743,7 @@ www.baidu.com                       IN    A      1.1.1.1
 1.1.1.1                             IN    PTR    www.baidu.com
 ```
 
-##### 资源记录类型RRT {#资源记录类型RRT}
+#### 资源记录类型RRT {#资源记录类型RRT}
 
 用来表示这条记录要解析的值在DNS内部是什么角色.
 
@@ -415,7 +837,7 @@ zone name			TTL		IN		RRT		VALUE
 www2.baidu.com.	600  	IN		CNAME	www.baidu.com.
 ```
 
-##### 还有一些概念 {#还有一些概念}
+#### 还有一些概念 {#还有一些概念}
 * 域: Domain是一个逻辑概念.
 * 区域: Zone是一个物理概念. 
  
@@ -464,7 +886,7 @@ Zone Name					  	 IN		RRT		VALUE
 	* 提示区域: 自己找不到的,根据hint找到根的位置 HINT
 	* 转发区域: 添加一条可递归的DNS服务器 FORWAR
 
-##### DNS服务器搭建 {#DNS服务器搭建}
+#### DNS服务器搭建 {#DNS服务器搭建}
 
 > **规划**  
 
@@ -555,7 +977,7 @@ ZONE "ZONE NAME" IN {
 
 ![](/assets/DNS服务器搭建过程.png)
 
-* 用到的一些命令及基说明
+**0 用到的一些命令及基说明**
 
 ```ZSH
 shell> mv /etc/named.conf /etc/named.conf.backup
@@ -582,7 +1004,7 @@ shell> dig -t NS . # 查找要域的所有DNS服务器,前提是运行dig进程�
 shell> dig -t NS . @A.ROOT-SERVERS.NET. # 直接通过A.ROOT-SERVERS.NET.这个域查找根域的信息
 ```
 
-* DNS服务器配置文件 /etc/named.conf
+**1 DNS服务器配置文件 /etc/named.conf**
 
 ```js
 options {
@@ -610,7 +1032,7 @@ zone "55.211.10.in-addr.arpa" IN {
 };
 ```
 
-* 正向区域文件 /var/named/xpercent.me.zone
+**2 正向区域文件 /var/named/xpercent.me.zone**
 
 ```ZSH
 $TTL 86400;
@@ -629,7 +1051,7 @@ www			IN		A			10.211.55.3
 ftp			IN		CNAME		www
 ```
 
-* 反向区域文件 /var/named/10.211.55.1.zone
+**3 反向区域文件 /var/named/10.211.55.1.zone**
 
 ```ZSH
 $TTL 86400;
@@ -646,14 +1068,14 @@ $TTL 86400;
 
 ```
 
-* /etc/resolv.conf
+**4 /etc/resolv.conf**
 
 ```ZSH
 # 这里的nameserver必须指向一台可以联网的主机
 nameserver 10.211.55.200
 ```
 
-* 测试一下
+**5 测试一下**
 
 ```ZSH
 # 正向测试
@@ -705,7 +1127,7 @@ ns1.xpercent.me.	86400	IN	A	10.211.55.1
 ;; MSG SIZE  rcvd: 105
 ```
 
-### DNS主从复制 
+#### DNS主从复制 
 
 > 泛域名解析
 
@@ -926,11 +1348,6 @@ a.shifen.com.		1200	IN	NS	ns3.a.shifen.com.
 数据传送发生在主从DNS服务器结构的,所以前提是的至少有两台DNS服务器.然后申明主从身份.注意,数据传送可以用来分析服务器系统的结构, 这是不安全的做法.应该将允许传送的主机做一些限制.通过allow-transfer中列出的名单.
 * 全量传送: axfr
 * 增量传送: ixfr
-
-### 基于OpenSS的HTTPS服务配置
-
-Http协议是明文的.为了在网络中安全的传送数据, 使用https.
-http是一个协议,而https是一个C/S模式的服务进程,默认端口是443.
 
 
 ### ISO的OSI七层模型 {#ISO的OSI七层模型}
