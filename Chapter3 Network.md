@@ -1,6 +1,9 @@
 ### 目录
 
 * [参考资料](#参考资料)
+* [ISO的OSI七层模型](#ISO的OSI七层模型)
+* [数据在网络中传输时封装](#数据在网络中传输时封装)
+* [HTTP](#http)
 * [网络安全](#网络安全)
   * [网络通信安全问题](#网络通信安全问题)
   * [加密](#加密)
@@ -12,14 +15,75 @@
   * [资源记录类型RRT](#资源记录类型RRT)
   * [还有一些概念](#还有一些概念)
   * [DNS服务器搭建](#DNS服务器搭建)
-* [ISO的OSI七层模型](#ISO的OSI七层模型)
-* [数据在网络中传输时封装](#数据在网络中传输时封装)
+
 
 ### 参考资料 {#参考资料}
 
 > 参考视频
 
 SPOTO ccna培训视频
+
+### ISO的OSI七层模型 {#ISO的OSI七层模型}
+
+![](/assets/OSI七层模型.png)
+
+### 数据在网络中传输时封装 {#数据在网络中传输时封装}
+
+![](/assets/数据封装.png)
+
+### HTTP {#http}
+
+HTTP首部
+ 
+- 1、Accept
+告诉WEB服务器自己接受什么介质类型，*/* 表示任何类型，type/* 表示该类型下的所有子类型，type/sub-type。
+- 2、Accept-Charset: 浏览器申明自己接收的字符集  
+	- Accept-Encoding: 浏览器申明自己接收的编码方法，通常指定压缩方法，是否支持压缩，支持什么压缩方法（gzip，deflate)  
+	- Accept-Language：浏览器申明自己接收的语言 
+	- 语言跟字符集的区别：中文是语言，中文有多种字符集，比如big5，gb2312，gbk等等。
+- 3、 Accept-Ranges：WEB服务器表明自己是否接受获取其某个实体的一部分（比如文件的一部分）的请求。bytes：表示接受，none：表示不接受。
+- 4、 Age：当代理服务器用自己缓存的实体去响应请求时，用该头部表明该实体从产生到现在经过多长时间了。
+- 5、 Authorization：当客户端接收到来自WEB服务器的 WWW-Authenticate 响应时，用该头部来回应自己的身份验证信息给WEB服务器。
+- 6、Cache-Control
+	- 请求：no-cache不要缓存的实体，要求现在从WEB服务器去取
+	- max-age: 只接受Age值小于max-age值，并且没有过期的对象
+	- max-stale: 可以接受过去的对象，但是过期时间必须小于max-stale值 
+	- min-fresh: 接受其新鲜生命期大于其当前Age跟min-fresh值之和的缓存对象
+	- 响应: public(可以用Cached内容回应任何用户) 
+	- private: 只能用缓存内容回应先前请求该内容的那个用户
+	- no-cache: 可以缓存，但是只有在跟WEB服务器验证了其有效后，才能返回给客户端
+	- max-age: 本响应包含的对象的过期时间
+	- ALL: no-store不允许缓存
+- 7、 Connection
+	- 请求:close（告诉WEB服务器或者代理服务器，在完成本次请求的响应后，断开连接，不要等待本次连接的后续请求了）。 
+	- keepalive（告诉WEB服务器或者代理服务器，在完成本次请求的响应后，保持连接，等待本次连接的后续请求）。 
+	- 响应：close（连接已经关闭）。 
+	- keepalive（连接保持着，在等待本次连接的后续请求）。 
+	- Keep-Alive：如果浏览器请求保持连接，则该头部表明希望 WEB 服务器保持连接多长时间（秒）。例如：Keep-Alive：300
+- 8、 Content-Encoding：WEB服务器表明自己使用了什么压缩方法（gzip，deflate）压缩响应中的对象。例如：Content-Encoding：gzip
+- 9、Content-Language：WEB 服务器告诉浏览器自己响应的对象的语言。
+- 10、Content-Length： WEB 服务器告诉浏览器自己响应的对象的长度。例如：Content-Length: 26012
+- 11、Content-Range： WEB 服务器表明该响应包含的部分对象为整个对象的哪个部分。例如：Content-Range: bytes 21010-47021/47022
+- 12、Content-Type： WEB 服务器告诉浏览器自己响应的对象的类型。例如：Content-Type：application/xml
+- 13、ETag：就是一个对象（比如URL）的标志值，就一个对象而言，比如一个 html 文件，如果被修改了，其 Etag 也会别修改，所以ETag 的作用跟 Last-Modified 的作用差不多，主要供 WEB 服务器判断一个对象是否改变了。比如前一次请求某个 html 文件时，获得了其 ETag，当这次又请求这个文件时，浏览器就会把先前获得的 ETag 值发送给WEB 服务器，然后 WEB 服务器会把这个 ETag 跟该文件的当前 ETag 进行对比，然后就知道这个文件有没有改变了。
+- 14、 Expired：WEB服务器表明该实体将在什么时候过期，对于过期了的对象，只有在跟WEB服务器验证了其有效性后，才能用来响应客户请求。是 HTTP/1.0 的头部。例如：Expires：Sat, 23 May 2009 10:02:12 GMT
+- 15、 Host：客户端指定自己想访问的WEB服务器的域名/IP 地址和端口号。例如：Host：rss.sina.com.cn
+- 16、 If-Match：如果对象的 ETag 没有改变，其实也就意味著对象没有改变，才执行请求的动作。
+- 17、 If-None-Match：如果对象的 ETag 改变了，其实也就意味著对象也改变了，才执行请求的动作。
+- 18、 If-Modified-Since：如果请求的对象在该头部指定的时间之后修改了，才执行请求的动作（比如返回对象），否则返回代码304，告诉浏览器 该对象没有修改。例如：If-Modified-Since：Thu, 10 Apr 2008 09:14:42 GMT
+- 19、 If-Unmodified-Since：如果请求的对象在该头部指定的时间之后没修改过，才执行请求的动作（比如返回对象）。
+- 20、 If-Range：浏览器告诉 WEB 服务器，如果我请求的对象没有改变，就把我缺少的部分给我，如果对象改变了，就把整个对象给我。浏览器通过发送请求对象的 ETag 或者 自己所知道的最后修改时间给 WEB 服务器，让其判断对象是否改变了。总是跟 Range 头部一起使用。
+- 21、 Last-Modified：WEB 服务器认为对象的最后修改时间，比如文件的最后修改时间，动态页面的最后产生时间等等。例如：Last-Modified：Tue, 06 May 2008 02:42:43 GMT
+- 22、 Location：WEB 服务器告诉浏览器，试图访问的对象已经被移到别的位置了，到该头部指定的位置去取。例如：Location：http://i0.sinaimg.cn/dy/deco/2008/0528/sinahome_0803_ws_005_text_0.gif
+- 23、 Pramga：主要使用 Pramga: no-cache，相当于 Cache-Control： no-cache。例如：Pragma：no-cache
+- 24、 Proxy-Authenticate： 代理服务器响应浏览器，要求其提供代理身份验证信息。Proxy-Authorization：浏览器响应代理服务器的身份验证请求，提供自己的身份信息。
+- 25、 Range：浏览器（比如 Flashget 多线程下载时）告诉 WEB 服务器自己想取对象的哪部分。例如：Range: bytes=1173546-
+- 26、 Referer：浏览器向 WEB 服务器表明自己是从哪个 网页/URL 获得/点击 当前请求中的网址/URL。例如：Referer：http://www.sina.com/
+- 27、 Server: WEB 服务器表明自己是什么软件及版本等信息。例如：Server：Apache/2.0.61 (Unix)
+- 28、 User-Agent: 浏览器表明自己的身份（是哪种浏览器）。例如：User-Agent：Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.8.1.14) Gecko/20080404 Firefox/2、0、0、14
+- 29、 Transfer-Encoding: WEB 服务器表明自己对本响应消息体（不是消息体里面的对象）作了怎样的编码，比如是否分块（chunked）。例如：Transfer-Encoding: chunked
+- 30、 Vary: WEB服务器用该头部的内容告诉 Cache 服务器，在什么条件下才能用本响应所返回的对象响应后续的请求。假如源WEB服务器在接到第一个请求消息时，其响应消息的头部为：Content- Encoding: gzip; Vary: Content-Encoding那么 Cache 服务器会分析后续请求消息的头部，检查其 Accept-Encoding，是否跟先前响应的 Vary 头部值一致，即是否使用相同的内容编码方法，这样就可以防止 Cache 服务器用自己 Cache 里面压缩后的实体响应给不具备解压能力的浏览器。例如：Vary：Accept-Encoding
+- 31、 Via： 列出从客户端到 OCS 或者相反方向的响应经过了哪些代理服务器，他们用什么协议（和版本）发送的请求。当客户端请求到达第一个代理服务器时，该服务器会在自己发出的请求里面添 加 Via 头部，并填上自己的相关信息，当下一个代理服务器收到第一个代理服务器的请求时，会在自己发出的请求里面复制前一个代理服务器的请求的Via 头部，并把自己的相关信息加到后面，以此类推，当 OCS 收到最后一个代理服务器的请求时，检查 Via 头部，就知道该请求所经过的路由。例如：Via：1.0 236.D0707195.sina.com.cn:80 (squid/2.6.STABLE13)
 
 ### 网络安全 {#网络安全}
 
@@ -247,23 +311,26 @@ openssl ?
 openssl speed [算法名称|DES3]
 whatis passwd
 man sslpasswd
-# enc - symmetric cipher routines对称加密规则
+// enc - symmetric cipher routines对称加密规则
 man enc [算法名称] [-in 从哪个文件读] [-out 输出到哪个文件]
-# 对inittab进行base64编码后,用des对inittab加密
+// 对inittab进行base64编码后,用des对inittab加密
 openssl enc -des -salt -a -in inittab -out inittab.des
 openssl enc -des -d -salt -a  -in inittab.des -out inittab
 openssl dgst -sha [filename] #提取特征码(摘要,指纹等)
-# 生成rsa 密钥对
+// 生成rsa 密钥对
 openssl genrsa [numbits] 
-# 用子shell生成文件权限为600,目录权限为700的文件,且文件中写的是长度为2048位的rsa私钥,文件名为server1024.key
+// 用子shell生成文件权限为600,目录权限为700的文件,且文件中写的是长度为2048位的rsa私钥,文件名为server1024.key
 (umask 077; openssl genrsa -out server1024.key 2048)
-# 从server1024.key文件中提取公钥
+// 从server1024.key文件中提取公钥
 openssl rsa -in server1024.key -pubout
 man req
-# 生成证书
+// 生成证书
 openssl req -new -x509 -key server1024.key -out server.crt -days 365
 # 查看证书内容
 openssl x509 -text -in server.crt
+// 单向加密算法的一些命令
+shasum [src file]
+md5sum [src file]
 ```
 
 **准备工作**  
@@ -294,14 +361,13 @@ openssl req -new -x509 -key private/cakey.pem -out cacert.pem
 **Step3** 用httpd服务申请一个证书
 
 ```ZSH
-# 生成密钥
+// 生成密钥
 [root@os1 data]# (umask 077; openssl genrsa -out httpdkey.pem 2048)
 Generating RSA private key, 2048 bit long modulus
 ............................................+++
 ...................................................+++
 e is 65537 (0x10001)
-# 填写申请书,附上自己的公钥,组织机构,个人联系方式,公司域名等信息,最后生成csr文件
-# csr: Certificate Signiture Request
+// 填写申请书,附上自己的公钥,组织机构,个人联系方式,公司域名等信息,最后生成csr文件.csr: Certificate Signiture Request
 [root@os1 data]# openssl req -new -key httpdkey.pem -out httpd.csr
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
@@ -322,10 +388,8 @@ Please enter the following 'extra' attributes
 to be sent with your certificate request
 A challenge password []:
 An optional company name []:
-
-# 将csr请求文件发送给CA服务器(目前在一台主机上,正常是在不同主机上,要进行文件传输)
-
-# CA根据csr请求生成一个证书
+// 将csr请求文件发送给CA服务器(目前在一台主机上,正常是在不同主机上,要进行文件传输)
+// CA根据csr请求生成一个证书
 [root@os1 data]# openssl ca -in httpd.csr -out httpd.crt -days 365
 Using configuration from /etc/pki/tls/openssl.cnf
 Check that the request matches the signature
@@ -906,25 +970,25 @@ Zone Name					  	 IN		RRT		VALUE
 shell> rpm -qa | grep "^bind"
 shell> rpm install -y bind-lib, bind-utils, bind
 shell> rpm -qlv bind # 查看bind最后的安装目录及配置文件等
-# 文件列表如下
+// 文件列表如下
 drwxr-x---    2 root  named  0 May  9 21:43 /etc/named
 -rw-r-----    1 root  named  984 Nov 20 2015 /etc/named.conf
 -rw-r--r--    1 root  named  2389 May  9 21:43 /etc/named.iscdlv.key
 -rw-r-----    1 root  named  931 Jun 21  2007 /etc/named.rfc1912.zones
 -rw-r--r--    1 root  named  487 Jul 19  2010 /etc/named.root.key
-# 守护进程脚本
+// 守护进程脚本
 -rwxr-xr-x    1 root  root   7992 May  9 21:43 /etc/rc.d/init.d/named
-# 守护进程脚本的配置文件
+// 守护进程脚本的配置文件
 -rw-r--r--    1 root    root 1695 May  9 21:43 /etc/sysconfig/named
-# rndc文件
+// rndc文件
 -rw-r-----    1 root    named  0 May  9 21:43 /etc/rndc.conf
 -rw-r-----    1 root    named  0 May  9 21:43 /etc/rndc.key
-# 二进制程序
+// 二进制程序
 -rwxr-xr-x    2 root    root   550744 May  9 21:43 /usr/sbin/named
 -rwxr-xr-x    1 root    root   28464 May  9 21:43 /usr/sbin/named-checkconf
 -rwxr-xr-x    1 root    root   24416 May  9 21:43 /usr/sbin/named-
 checkzone
-# 区域数据文件
+// 区域数据文件
 -rw-r-----    1 root  named  3171 Jan 11  2016 /var/named/named.ca
 -rw-r-----    1 root  named  152 Dec 15  2009 /var/named/named.empty
 -rw-r-----    1 root  named  152 Jun 21  2007 /var/named/named.localhost
@@ -987,7 +1051,7 @@ shell> mv /etc/named.conf /etc/named.conf.backup
 shell> cp /etc/named.conf.backup /etc/named.conf -p
 shell> named-checkconfig
 shell> named-checkzone "." /var/named/named.ca
-# named-checkzone "zone name" filename
+// named-checkzone "zone name" filename
 shell> named-checkzone "localhost" /var/named/named.localhost
 shell> named-checkzone "loopback" /var/named/named.loopback
 shell> getenforce # 确认selinux是否开启,开启的话要关闭
@@ -1001,8 +1065,7 @@ shell> dig -t NS	xpercent.me
 shell> dig -t A www.xpercent.me.
 shell> dig -t MX mail.xpercent.me.
 shell> dig -x IP
-
-# dig: domain information gropher,在域名服务器系统中查看相关信息
+// dig: domain information gropher,在域名服务器系统中查看相关信息
 shell> dig -t NS . # 查找要域的所有DNS服务器,前提是运行dig进程的主机必须要能访问互联网
 shell> dig -t NS . @A.ROOT-SERVERS.NET. # 直接通过A.ROOT-SERVERS.NET.这个域查找根域的信息
 ```
@@ -1353,11 +1416,4 @@ a.shifen.com.		1200	IN	NS	ns3.a.shifen.com.
 * 增量传送: ixfr
 
 
-### ISO的OSI七层模型 {#ISO的OSI七层模型}
-
-![](/assets/OSI七层模型.png)
-
-### 数据在网络中传输时封装 {#数据在网络中传输时封装}
-
-![](/assets/数据封装.png)
 
