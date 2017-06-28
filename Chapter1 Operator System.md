@@ -81,8 +81,8 @@ kernel是elf格式的可执行文件,它被嵌入到ucore.img文件中,存放在
 
 ![](/assets/生成磁盘文件.png)
 
-Step1: 编译各个目录下的.c和.s文件,生成.目标文件
-Step2: ld bin/kern,将bin/kern目录下的所有.o目标文件链接起来,生成可执行文件;ld bin/bootblock,与bin/kern目录一样,生成可执行文件.
+Step1: 编译各个目录下的.c和.s文件,生成.目标文件  
+Step2: ld bin/kern,将bin/kern目录下的所有.o目标文件链接起来,生成可执行文件;ld bin/bootblock,与bin/kern目录一样,生成可执行文件.  
 Step3: 开始生成ucore.img文件. dd命令生成ucore.img文件也经过了三步.每一步的具体操作如图中Step3所示.
 
 
