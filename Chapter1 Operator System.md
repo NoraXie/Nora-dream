@@ -11,6 +11,82 @@
 清华大学学堂在线公开课: &lt;&lt;操作系统&gt;&gt;  
 清华大学学堂在线操作系统实验课: &lt;&lt;操作系统uCore实验&gt;&gt;
 
+### uCore操作系统实验
+
+#### 实验0
+
+> 环境准备
+
+- 可以用实验楼的环境,但速度慢得unbelievable,果断自己装个机了跑 
+- Linux图形化环境一台
+
+我用的[Ubuntu 1610](http://mirrors.xmu.edu.cn/ubuntu/releases/), 这是厦门大学的镜像文件服务器,包括各种Linux发行版都有.由于不喜欢直接在mac本上装软件,一般会用Parallel Desktop虚拟机装多个系统,目前装了2台centos,1台ubuntu,1台win7.
+
+- Qemu硬件模拟器(之所以要用图形化Linux,就是因为qemu)
+- 清华大学OS课程实验代码库[ucore lab](https://github.com/chyyuu/os_tutorial_lab)
+- 清华大学OS课程[WIKI](http://os.cs.tsinghua.edu.cn/oscourse/OS2017spring)
+
+> 知识准备
+
+- Linux基本命令
+- Linux包管理工具(用于安装各种应用程序)
+- 8086/80386的硬件结构(可以看看清华大学的<<汇编语言>>,国内将底层结构与原理讲得最好的一本书)
+- vim编辑器
+- 汇编指令
+- C语言
+- 数据结构
+- git版本管理软件
+- markdown
+- makefile
+- gdb调试命令
+- qemu
+- meld
+- diffutil
+
+当然不会也没关系,[实验指导书](https://chyyuu.gitbooks.io/ucore_os_docs/content/)里都有列出常用的工具和命令,用的时候去查也可以.
+
+#### 实验一
+
+> 目的
+
+写一个简单的落后的功能单一的dirt simple boot loader.其sole job就是要从磁盘(assume假设是这样了滴)的第一个扇区开始读取elf格式的kernel.
+
+- 1 生成磁盘文件ucore.img
+- 2 qemu装载ucore.img硬盘
+- 3 开机启动qemu,装载kernel运行第一个操作系统.
+
+> 如何工作
+
+qemu是一台物理主机.
+
+**1. 给qemu装硬盘**  
+生成一个ucore.img镜像文件,模拟物理硬盘.
+
+**2. 生成主引导扇区**  
+boot/sign.c代码负责生成512Bytes的主引导扇区bootblock,里面有boot loader代码. bootblock被嵌入ucore.img文件内,从而模拟磁盘的0号扇区内的MBR.file一下bootblock可以看到这个文件类型与相关信息
+
+```ZSH
+shell> hbase@hbase:~/ucore_os_lab/labcodes/lab1$ file bin/bootblock
+bin/bootblock: DOS/MBR boot sector; partition 1 : ID=0xc5, active 0xc6, start-CHS (0x341,65,7), end-CHS (0x4,12,4), startsector 1835008, 4980736 sectors; partition 2 : ID=0xff, start-CHS (0xff,0,61), end-CHS (0x10,255,51), startsector 1090519040, 42272782 sectors
+```
+
+由上面可以知道bootblock是一个MBR的启动扇区,此外,它还记录了ucore.img有两个分区.
+
+**3. 载入内核kernel**  
+kernel是elf格式的可执行文件,它被嵌入到ucore.img文件中,存放在紧挨着(onward)主引导扇区的几个扇区内.
+
+> make V=
+
+这个命令可以看到命令执行的过程,从而分析ucore.img文件的生成过程.简单截取关键步骤如图所示.
+
+![](/assets/生成磁盘文件.png)
+
+Step1: 编译各个目录下的.c和.s文件,生成.目标文件
+Step2: ld bin/kern,将bin/kern目录下的所有.o目标文件链接起来,生成可执行文件;ld bin/bootblock,与bin/kern目录一样,生成可执行文件.
+Step3: 开始生成ucore.img文件. dd命令生成ucore.img文件也经过了三步.每一步的具体操作如图中Step3所示.
+
+
+
 ### 计算机结构 
 
 > CPU
