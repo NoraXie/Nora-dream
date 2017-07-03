@@ -82,10 +82,71 @@ kernel是elf格式的可执行文件,它被嵌入到ucore.img文件中,存放在
 ![](/assets/生成磁盘文件.png)
 
 Step1: 编译各个目录下的.c和.s文件,生成.目标文件  
+
+```ZSH
++ cc kern/init/init.c
++ cc kern/libs/readline.c
++ cc kern/libs/stdio.c
++ cc kern/debug/kdebug.c
++ cc kern/debug/kmonitor.c
++ cc kern/debug/panic.c
++ cc kern/driver/clock.c
++ cc kern/driver/console.c
++ cc kern/driver/intr.c
++ cc kern/driver/picirq.c
++ cc kern/trap/trap.c                     ^
++ cc kern/trap/trapentry.S
++ cc kern/trap/vectors.S
++ cc kern/mm/pmm.c
++ cc libs/printfmt.c
++ cc libs/string.c
+
+```
+
 Step2: ld bin/kern,将bin/kern目录下的所有.o目标文件链接起来,生成可执行文件;ld bin/bootblock,与bin/kern目录一样,生成可执行文件.  
+
+```	zsh
++ ld bin/kernel
++ cc boot/bootasm.S
++ cc boot/bootmain.c
++ cc tools/sign.c
++ ld bin/bootblock
+'obj/bootblock.out' size: 472 bytes
+build 512 bytes boot sector: 'bin/bootblock' success!
+```
+
 Step3: 开始生成ucore.img文件. dd命令生成ucore.img文件也经过了三步.每一步的具体操作如图中Step3所示.
 
+```ZSH
+10000+0 records in
+10000+0 records out
+5120000 bytes (5.1 MB) copied, 0.0138834 s, 369 MB/s
+1+0 records in
+1+0 records out
+512 bytes (512 B) copied, 0.00042473 s, 1.2 MB/s
+138+1 records in
+138+1 records out
+70783 bytes (71 kB) copied, 0.000804386 s, 88.0 MB/s
+```
 
+> 练习一  
+
+> - 操作系统镜像文件ucore.img是如何一步一步生成的?详细说明Makefile文件中的每一条相关命令和命令参数的含义,并写出命令执行后的结果
+> > 整个生成过程见上面的分析,这里省略
+
+> - 系统上电后的启动过程
+> > 2.1 上电开机 BIOS起始地址为CS:EIP=0XF000<4+0XFFF0=0XF0000+OXFFF0=0XFFFF0  
+> > 2.2 BIOS跳转至bootloader的起始地址CS:EIP=0X0000<4+OX7C00=OX7C00  
+> > 2.3 bootloader加载kernel进内存,起始地址为EIP0X100000 
+
+>> BIOS是烧制计算机上的某个固件上,其起始地址在开机上电初始化CPU时设置的,为CS:EIP.BIOS负责检查CPU,内存,外部IO设备, 一切正常后将EIP寄存器的值设置为0x7c00,将CPU的执行权交给bootloader.  
+>> bootasm.s和bootmain.c是bootloader的两个子程序. 它们负责1.初始化全局描述符表,以便通过段寄存器选择子查找对应段的起始地址与长度2.将运行模式从1M的实模式切换到4G的保护模式3.读取磁盘位于主引导扇区之后的扇区,加载kernel进内存.  
+>> kernel运行后,整个操作系统就开始正常运行了.
+
+> - 一个被操作系统认为是符合规范的硬盘主导扇区的特征是什么?  
+
+> > 3.1 扇区最后两个字节的内容必须为0X55AA  
+> > 3.2 bootloader代码不能超过446Bytes  
 
 ### 计算机结构 
 
