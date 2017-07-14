@@ -10,7 +10,7 @@
 > bitCount:    
 > bitCount(7) = 3, bitCount(5) = 2
 
-![统计二进制数中1的数量](/assets/bitcount.png "how many ones in decimal integer")
+![统计二进制数中1的数量](/assets/bitcount1.png "how many ones of a decimal integer")
 
 ```c
 /*
