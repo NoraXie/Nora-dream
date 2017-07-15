@@ -10,7 +10,7 @@
 > bitCount:    
 > bitCount(7) = 3, bitCount(5) = 2
 
-![统计二进制数中1的数量](/assets/bitcount1.png "how many ones of a decimal integer")
+![统计二进制数中1的数量](/assets/bitcount1.png "how many ones of a de quitcimal integer")
 
 ```c
 /*
@@ -67,6 +67,48 @@ int bitCount(int x) {
   result = ( result + ( result >> 8 ) ) & every_16_bit;
   result = ( result + ( result >> 16 ) ) & every_32_bit;
 
+  return result;
+}
+```
+
+> ilog2  
+> ilog2(16) = 4
+
+`分析思路如图,图1和图2分别分析了bit_16,bit_8,bit_4,bit_2,bit_1 是否为0的情况,最终的结果是二者交叉出现后的和`
+
+
+![2为底的对数1](/assets/ilog1.png "how many bits of a positive integer")
+
+![2为底的对数2](/assets/ilog2.png "how many bits of a positive integer")
+
+
+```c
+/*
+ * ilog2 - return floor(log base 2 of x), where x > 0
+ *   Example: ilog2(16) = 4: 得到多少位二进制表示即为答案
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 90
+ *   Rating: 4
+ *   负数和0的结果应该为 0. 只能求正数的对数.
+ */
+int ilog2(int x) {
+  // get a positive number; negative and zero will return 0, only get positive's bitcounts.
+  // positive number's msb is 0, then !x will get 1, 1 << 31 get 0x10000000, 0x10000000 >> 31 get 0xffffffff.
+  // negative and zero is 1, then !x will get 0, (0 << 31)>>31 always be 0x00000000.
+  int isPositive = ( !((x >> 31) | (!x)) << 31 )>>31;
+  // 二分法.见图中分析过程
+  int bit_16, bit_8, bit_4, bit_2, bit_1;
+  int result = 0;
+  bit_16 = !(!(x >> 16)) << 4;
+  x = x >> bit_16;
+  bit_8 = !(!(x >> 8)) << 3;
+  x = x >> bit_8;
+  bit_4 = !(!(x >> 4)) << 2;
+  x = x >> bit_4;
+  bit_2 = !(!(x >> 2)) << 1;
+  x = x >> bit_2;
+  bit_1 = !(!(x >> 1));
+  result = (isPositive) & (bit_16 + bit_8 + bit_4 + bit_2 + bit_1);
   return result;
 }
 ```
