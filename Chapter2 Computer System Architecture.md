@@ -113,6 +113,120 @@ int ilog2(int x) {
 }
 ```
 
+#### BOMB LAB
+
+##### PHASE_4
+
+```c
+ 421 0000000000400fce <func4>:
+ 422   400fce:   48 83 ec 08             sub    $0x8,%rsp
+ 423   400fd2:   89 d0                   mov    %edx,%eax
+ 424   400fd4:   29 f0                   sub    %esi,%eax
+ 425   400fd6:   89 c1                   mov    %eax,%ecx
+ 426   400fd8:   c1 e9 1f                shr    $0x1f,%ecx
+ 427   400fdb:   01 c8                   add    %ecx,%eax
+ 428   400fdd:   d1 f8                   sar    %eax
+ 429   400fdf:   8d 0c 30                lea    (%rax,%rsi,1),%ecx
+ 430   400fe2:   39 f9                   cmp    %edi,%ecx
+ 431   400fe4:   7e 0c                   jle    400ff2 <func4+0x24>
+ 432   400fe6:   8d 51 ff                lea    -0x1(%rcx),%edx
+ 433   400fe9:   e8 e0 ff ff ff          callq  400fce <func4>
+ 434   400fee:   01 c0                   add    %eax,%eax
+ 435   400ff0:   eb 15                   jmp    401007 <func4+0x39>
+ 436   400ff2:   b8 00 00 00 00          mov    $0x0,%eax
+ 437   400ff7:   39 f9                   cmp    %edi,%ecx
+ 438   400ff9:   7d 0c                   jge    401007 <func4+0x39>
+ 439   400ffb:   8d 71 01                lea    0x1(%rcx),%esi
+ 440   400ffe:   e8 cb ff ff ff          callq  400fce <func4>
+ 441   401003:   8d 44 00 01             lea    0x1(%rax,%rax,1),%eax
+ 442   401007:   48 83 c4 08             add    $0x8,%rsp
+ 443   40100b:   c3                      retq
+ 444
+ 445 000000000040100c <phase_4>:
+ 446   40100c:   48 83 ec 18             sub    $0x18,%rsp
+ 447   401010:   48 8d 4c 24 0c          lea    0xc(%rsp),%rcx
+ 448   401015:   48 8d 54 24 08          lea    0x8(%rsp),%rdx
+ 449   40101a:   be cf 25 40 00          mov    $0x4025cf,%esi
+ 450   40101f:   b8 00 00 00 00          mov    $0x0,%eax
+ 451   401024:   e8 c7 fb ff ff          callq  400bf0 <__isoc99_sscanf@plt>
+ 452   401029:   83 f8 02                cmp    $0x2,%eax
+ 453   40102c:   75 07                   jne    401035 <phase_4+0x29>
+ 454   40102e:   83 7c 24 08 0e          cmpl   $0xe,0x8(%rsp)
+ 455   401033:   76 05                   jbe    40103a <phase_4+0x2e>
+ 456   401035:   e8 00 04 00 00          callq  40143a <explode_bomb>
+ 457   40103a:   ba 0e 00 00 00          mov    $0xe,%edx
+ 458   40103f:   be 00 00 00 00          mov    $0x0,%esi
+ 459   401044:   8b 7c 24 08             mov    0x8(%rsp),%edi
+ 460   401048:   e8 81 ff ff ff          callq  400fce <func4>
+ 461   40104d:   85 c0                   test   %eax,%eax
+ 462   40104f:   75 07                   jne    401058 <phase_4+0x4c>
+ 463   401051:   83 7c 24 0c 00          cmpl   $0x0,0xc(%rsp)
+ 464   401056:   74 05                   je     40105d <phase_4+0x51>
+ 465   401058:   e8 dd 03 00 00          callq  40143a <explode_bomb>
+ 466   40105d:   48 83 c4 18             add    $0x18,%rsp
+ 467   401061:   c3                      retq
+
+```
+
+> phase_4
+
+phase_4接收两个参数, 根据`40101a:   be cf 25 40 00          mov    $0x4025cf,%esi` 用gdb查看phase_4接收`%d %d`格式的参数.
+
+```c
+463   401051:   83 7c 24 0c 00          cmpl   $0x0,0xc(%rsp)
+464   401056:   74 05                   je     40105d <phase_4+0x51>
+465   401058:   e8 dd 03 00 00          callq  40143a <explode_bomb>
+```
+ 
+ 
+ 
+可以判断出第二个参数必定为0难点就在于如何确定phase_4的每一个参数,这个参数也是`func4`的第一个输入参数.根据参数寄存器rdi,rsi,rdx可知func4的三个参数分别为: rdi(未知),rsi=0,rdx=14(0xe).其中rdi的值必须为保证func4的返回值寄存器eax=0且`0<= rdi <=14`.
+
+> func4
+
+根据反汇编的代码可以看出这是一个递归调用过程.来看一下第一次调用func4时,发生了什么.
+
+```c
+400fd2:   89 d0                   mov    %edx,%eax  // eax = edx
+400fd4:   29 f0                   sub    %esi,%eax  // eax = edx - esi
+400fd6:   89 c1                   mov    %eax,%ecx  // ecx = eax
+400fd8:   c1 e9 1f                shr    $0x1f,%ecx // ecx = ecx >> 31 = 0, 32位表示的正数经过逻辑右移31位后是0 
+400fdb:   01 c8                   add    %ecx,%eax  // eax = ecx + eax = 0+eax
+400fdd:   d1 f8                   sar    %eax // eax = eax/2;
+400fdf:   8d 0c 30                lea    (%rax,%rsi,1),%ecx //ecx = rax + rsi
+
+进行等量代换后的关系即为 ecx = (rdi + rsi) / 2;
+```
+
+经过分析后写出伪代码如下
+
+```c
+func4(rdi,rsi,rdx) {
+      int result = eax;
+      int ecx = (rsi + rdx)/2;
+1     if(ecx > rdi) {
+         rdx = ecx - 1;
+         func4(rdi,rsi,rdx);
+         result += result;
+      }else{
+         eax = 0;
+         result = eax;
+2         if(ecx >= rdi){
+             return result;
+         }else{
+             rsi = tmp + 1;
+             func4(rdi, rsi, rdx);
+         }
+     }
+}
+```
+通过伪代码再来看一下第一次调用过程中各个参数的值.递归过程结束的条件语句是`2`,而进入`2`所在的代码区域前提是`ecx <= rdi`, 这与`ecx >= rdi`只有一种情况可以共存,即 `ecx = rdi`,而进入第一次调用func4后马上有`ecx = (rsi + rdx)/2 = 7`, 于是有rdi = 7, 此时返回值正好为0.
+
+> 结果
+
+phase_4的两个输入为:` 7 0 `
+
+
 ### 浮点数在计算机中存储遵循IEEE754标准
 
 总的来说,IEEE754标准将浮点数拆分成两个定点数后进行管理.这两个定点部分分别为阶码Exponent和尾数Significand.
