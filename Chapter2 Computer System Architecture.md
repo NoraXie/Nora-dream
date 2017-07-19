@@ -227,6 +227,115 @@ func4(rdi,rsi,rdx) {
 phase_4的两个输入为:` 7 0 `
 
 
+### 指令体系结构实验
+
+#### 安装Y86-64处理器(CPU)模拟器
+
+![Y86Processor Simulator](/assets/y86processor.png "Y86Processor Simulator")
+
+##### 安装GUI依赖的工具包
+
+如果不想在GUI模式下运行模拟器,只需要做4,5,7,8即可.
+
+> 1 sudo apt-get install -y libtk8.5  
+> 2 sudo apt-get install -y tcl8.5 tcl8.5-dev tk8.5 tk8.5-dev  
+> 3 sudo apt-get install -y bison flex  
+> 4 tar xf sim.tar  
+> 5 cd sim  
+> 6 GUI模式运行模拟器这里可能多一步配置(见下图)  
+> 7 make clean  
+> 8 make 
+
+##### sim目录
+
+misc: YAS,YIS,HCL2C等工具包的源码及可执行文件.  
+seq: SEQ,SEQ+模拟器源码及可执行文件.  
+pipe: PIPE模拟器源码及可执行文件.  
+y86-code: 第四章大部分Y86汇编代码example.  
+ptest: 为不同指令,跳转,冒险(hazard)可能性产生系统回归测试(systematic regression test)的脚本.
+
+##### 配置
+
+shell sim> vim Makefile
+
+```zsh
+# Comment this out if you don't have Tcl/Tk on your system
+
+GUIMODE=-DHAS_GUI
+
+# Modify the following line so that gcc can find the libtcl.so and
+# libtk.so libraries on your system. You may need to use the -L option
+# to tell gcc which directory to look in. Comment this out if you
+# don't have Tcl/Tk.
+
+#TKLIBS=-L/usr/lib/**your lib path**
+TKLIBS=-L/usr/lib/x86_64-linux-gnu -ltk -ltcl
+
+# Modify the following line so that gcc can find the tcl.h and tk.h
+# header files on your system. Comment this out if you don't have
+# Tcl/Tk.
+
+#TKINC=-isystem **your tk.h tc.h pat**h
+TKINC=-isystem /usr/include/tcl8.5
+
+##################################################
+# You shouldn't need to modify anything below here
+##################################################
+
+# Use this rule (make all) to build the Y86 tools. The variables you've
+# assigned to GUIMODE, TKLIBS, and TKINC will override the values that
+# are currently assigned in seq/Makefile and pipe/Makefile.
+all:
+	(cd misc; make all)
+	(cd pipe; make all GUIMODE=$(GUIMODE) TKLIBS="$(TKLIBS)" TKINC="$(TKINC)")
+	(cd seq; make all GUIMODE=$(GUIMODE) TKLIBS="$(TKLIBS)" TKINC="$(TKINC)")
+	(cd y86-code; make all)
+
+clean:
+	rm -f *~ core
+	(cd misc; make clean)
+	(cd pipe; make clean)
+	(cd seq; make clean)
+	(cd y86-code; make clean)
+	(cd ptest; make clean)
+```
+如果出现各种file not found, 可以看下是不是这里的两个路径写的不对
+
+
+##### 工具程序
+
+> YAS: Y86的编译器. 
+
+shell: y86-code> make asum.yo
+
+> YIS: Y86指令模拟器.  
+> 模拟程序的执行过程,并能将寄存器,存储器的状态与内容输出到控制台.
+
+shell: y86-code> ../misc/yis asum.yo
+
+##### 模拟器
+
+![Y86模拟器](/assets/y86simulator.png "Y86模拟器")
+
+实验包括三种处理器,SEQ,SEQ+和PIPE,分别对应模拟器SSIM,SSIM+和PSIM.所有的模拟器能在TTY(命令行)和GUI(图形化)模式下运行.
+
+###### 命令选项
+
+`-h` 帮助信息  
+`-g` 在GUI模式下运行(默认是tty)  
+`-t` 同时运行处理器和指令模拟器.  
+`-l m` 设置指令数量范围, 最多执行m条指令(默认10000条指令)  
+`-v n` 设置verbosity级别为n, 允许的范围为0-2, 默认为2.  
+
+运行在GUI模式下的模拟器运行时,必须带上目标文件(object file).TTY模式可带可不带.像这样都可行
+
+shell ssim> ./ssim -h  
+shell seq> ./ssim -t < ../y86-code/asum.yo  
+shell pipe> ./psum -t -g ../y86-code/asum.yo  
+
+第一个栗子打印SSIM的命令行选项信息.第二个栗子以tty模式启动SEQ模拟器,并从标准输入读入object文件asum.yo.第三个栗子以GUI模式启动PIPE模拟器,并执行asum.yo文件中的指令.第二和第三个栗子都将会将运行结果与高级ISA模拟器进行比较.
+
+
 ### 浮点数在计算机中存储遵循IEEE754标准
 
 总的来说,IEEE754标准将浮点数拆分成两个定点数后进行管理.这两个定点部分分别为阶码Exponent和尾数Significand.
