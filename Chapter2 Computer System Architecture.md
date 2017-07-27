@@ -299,14 +299,16 @@ clean:
 	(cd y86-code; make clean)
 	(cd ptest; make clean)
 ```
-如果出现各种file not found, 可以看下是不是这里的两个路径写的不对
+如果出现各种file not found, 可以看下是不是这里的两个路径`TKLIBS`和`TKINC`写的不对
 
 
 ##### 工具程序
 
-> YAS: Y86的编译器. 
+> YAS: Y86汇编器(Assembler).对Y86汇编码文件(\*.ys)进行编译,生成一个目标文件(*.yo) 
 
-shell: y86-code> make asum.yo
+实验与书中的所有.ys代码可以用y86-code中的,如果要自己创建,最好先将C编译生成结6-64的.s文件后,改成Y86指令后另存为.ys文件.如,现在修改好的一份mul.ys文件,要生成mul.yo,敲这个命令就好.**注意这是说为mul.ys生成mul.yo文件.**
+
+shell: y86-code> make mul.yo
 
 > YIS: Y86指令模拟器.  
 > 模拟程序的执行过程,并能将寄存器,存储器的状态与内容输出到控制台.
@@ -335,6 +337,34 @@ shell pipe> ./psum -t -g ../y86-code/asum.yo
 
 第一个栗子打印SSIM的命令行选项信息.第二个栗子以tty模式启动SEQ模拟器,并从标准输入读入object文件asum.yo.第三个栗子以GUI模式启动PIPE模拟器,并执行asum.yo文件中的指令.第二和第三个栗子都将会将运行结果与高级ISA模拟器进行比较.
 
+
+### 第四\五\六章重要知识点
+
+- 流水线(pipeline)
+- 单指令多数据(SIMD)
+- 循环展开
+- 矩阵分块(大型矩阵会导致容量缓存不命中)
+- 局部性(locality)
+- [OpenBLAS](https://github.com/xianyi/OpenBLAS)矩阵乘法库,充分利用了上述三个技能
+
+> row-major order 和 column-major order
+
+- row-major order matrix stores elements in memory [1,2,3,4,5,6,7,8,9]
+
+
+```javascript
+|1,2,3|
+|4,5,6|
+|7,8,9|
+```
+
+- column-major order matrix stores elements in memory [1,4,7,2,5,8,3,6,9]
+
+```javascript
+|1,4,7|
+|2,5,8|
+|3,6,9|
+```
 
 ### 浮点数在计算机中存储遵循IEEE754标准
 
