@@ -128,7 +128,7 @@ x if x < y else y
 
 用于编写通用迭代结构,非遍历式的循环,因为遍历需要计数
 
-```Python
+```python
 while boolean_expression:
 	while-suite
 else:
@@ -138,7 +138,7 @@ else分支仅在循环结束后执行一次.
 
 `栗子1`
 
-```Python
+```python
 In [283]: url = 'xpercent.tech'
 
 In [284]: while url:
@@ -161,7 +161,7 @@ h
 ```
 `栗子2`
 
-```Python
+```python
 In [7]: url = 'xpercent.tech'
 
 In [8]: while url:
@@ -188,7 +188,7 @@ game over
 
 `栗子3`
 
-```Python
+```python
 In [11]: x = 0
 
 In [12]: url = 'xpercent.tech'
@@ -221,4 +221,147 @@ in成员关系测试
 内置的map,reduce和filter函数  
 
 
-I
+> 循环 生成器 enumerate
+
+`列表解析`
+
+`生成器`
+
+`迭代器`
+
+`enumerate`
+
+
+### 文件
+
+> 文件打开模式
+
+`r` 只读模式打开  
+`w` 写模式打开  
+`a` 追加模式打开  
+`r+` 以读模式打开,但是同时支持文件读写  
+`w+` 以写模式打开,同时支持读写  
+`a+` 以追加模式打开,同时支持读写  
+
+
+> os模块(与文件系统交互的模块)
+
+支持跨平台的文件操作API.支持的方法和属性特别多,此外`os子模块os.path模块`实现文件路径字符串的管理.常用的
+
+```python
+目录相关
+chdir()/fchdir() 改变工作目录
+chroot() 	改变当前进程的根目录
+listdir() 	列出指定目录下的所有文件名 包括目录
+mkdir() 	创建指定目录 如果给的路径不存在会抛出异常
+makedirs() 	如果父目录不存在的话 先创建你目录 再创建目录本身
+getcwd()
+rmdir()
+removedirs() 
+
+文件相关
+mkfifo()	创建先进先出的管道文件
+mknod()		创建设备文件
+remove()	删除文件
+unlink()	删除链接文件
+rename()	文件重命名
+renames()	
+stat()		返回文件状态信息
+symlink()	创建一个符号链接 
+utime()		更新文件时间戳
+tmpfile()	创建并打开(w+b)一个新的临时文件
+
+访问权限相关
+access()	检验用户对文件是否有访问权限 
+chmod()		改变权限 
+chown()		改变属主属组
+
+文件描述符
+open() 		low level IO, 调用系统调用实现的
+read()		根据文件描述符读
+write()		根据文件描述符写
+
+设备文件
+mkdev()		根据文件的主设备号 次设备号创建设备(mknod是创建设备文件的)
+major()		获取主设备号
+minor()		获取次设备号
+
+os.path模块
+basename()	路径基名
+dirname()	路径父目录名
+join()		将
+split()		返回(filename,basename)tuple
+splitext()	返回(filename,extension)tuple
+
+getatime()	文件最近一次时间
+getctime()	文件创建时间
+getmtime()	文件最近一次修改时间
+getsize()	返回文件大小
+
+exists()	指定文件是否存在
+isabs()		判断指定路径是否为绝对路径
+isfile()	是否为文件
+isdir()		是否为目录
+islink()	是否为符号链接
+ismount() 	是否为挂载点
+samefile()	判断两个路径是否指向同一个文件
+```
+
+练习: 判断一个文件是否存在,存在则打开,打开后让用户通过键盘反复输入多行数据,追加保存至些文件中.
+
+```python
+#!/usr/bin/python36
+#
+import os
+import os.path
+
+filename = '/home/hbase/python/c'
+
+if os.path.isfile(filename):
+    f = open(filename,'a+')
+
+while True:
+    line = input("please enter sth>")
+    if line == 'q' or line == 'quit':
+        break;
+    f.write(line + '\n')
+
+f.flush()
+f.close()
+```
+
+> 对象持久化
+
+对象的流式化工具(相当于java的序列化),常用模块  
+`pickle` 将Python的原生对象存储到文件中  
+`marshal` 
+
+第三方数据库接口DBM: 这种接口不支持扁平化.
+
+### 函数
+
+#### 函数类型
+
+`全局函数`  直接定义在模块中  
+
+`局部函数`	被嵌套于其它函数中,闭合,装饰器,
+
+`lambda函数`	表达式
+
+`方法`	与特定数据类型关联的函数, 并且只能与数据类型关联一起使用
+
+> 语法
+
+```python
+def functionName(parameters):  
+    suite
+```
+> 名称空间 namespace
+
+namespace是用来管理python中的变量.python中创建\删除\修改变量都在namespace中查看到.ipython解释器通过`whos`命令查看namespace中的全局变量.
+
+变量作用域即名称空间:  
+
+`全局作用域`	在整个python代码文件(比如module)中能使用的变量
+
+`函数作用域`	只能在函数中使用的变量
