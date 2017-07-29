@@ -7,7 +7,7 @@
 * [Chapter4 Program Languages](Chapter4 Program Languages.md)
   * [C](Chapter4 Program Languages/c.md)
   * Java
-  * Python
+  * [Python](Chapter4 Program Languages/python.md)
   * Shell
 * [Chapter5 Data Structure and Algorithm](Chapter5 Data Structure and Algorithm.md)
 * [Chapter6 Database System](Chapter6 Database System.md)
