@@ -195,4 +195,65 @@ where u.is_advisor = 1 and u.status = 2 and u.role_bitmap = 2 and u.user_id in (
  362384488134654,
  354191617808382,
  406759308523518) order by d.集团军id, 野战军id, 战队id;
+ 
+ 
+ 
+ select * from user where identity_card is null and is_advisor = 1 and status = 2 and external = 0;
+
+select * from `advisor_transfer_records` 
+-- where new_depart_id = 161;
+where advisor_id = 385930834083839;
+--  where `new_depart_name` = '顶尖勇士队';
+-- where advisor_id = 417230979784703;
+
+select user.telephone, tmp_card.phone, tmp_card.card, user_id, user.identity_card from user left join tmp_card on tmp_card.phone = user.telephone;
+
+select * from user where real_name = '邱建伟';
+
+select * from depart where dept_name = '争锋队';
+
+select * from depart where depart_id = 348;
+
+select * from user where department_id = 161 and status = 2 and is_advisor = 1;
+
+select * from user where user_id = 418961196988414;
+
+select * from deals where `receivable_money`< 0;
+
+select * from project_fenxiaos where loupan_id = 343466073901058;
+
+select * from tuiguang_targets;
+
+select * from `transfer_records` tr join customer c on tr.customer_id = c.customer_id 
+where tr.created_at <= '2017-11-15 00:00:00' and c.is_del = 0;
+
+select * from  customer c join `transfer_records` tr on tr.customer_id = c.customer_id 
+where tr.created_at <= '2017-11-15 00:00:00';
+
+select count(distinct(customer_id)) from customer where created_at <= '2017-11-15 00:00:00';
+
+select count(distinct(customer_id))from `transfer_records` where created_at <= '2017-11-15 00:00:00';
+
+select * from `appointment` where customer_id = 340662704922623;
+
+select * from `customer_follow_up` where customer_id = 340662704922623;
+
+select * from customer where customer_id = 340662704922623;
+
+select * from deals where item_id is null;
+
+select * from area c left join area p
+on c.`parent_id` = p.`area_id` 
+where c.parent_id = 263804351010818;
+
+select distinct(item.area_id), area.`area_name` from item join area 
+on item.area_id = area.`area_id` where item.area_id lis not null and area.parent_id = -1;
+
+select * from area where area_id = 316028062087167;
+
+select * from appointment where customer_id is null and status in (5,6,10);
+
+select * from appointment_item where created_at is null;
+
+select identity_card, user_id, real_name from user where user_id = 417778625433599;
 ```
