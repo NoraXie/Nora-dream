@@ -35,7 +35,6 @@ c.parent_id as 野战军id, p.dept_name as 野战军名称,
 p.parent_id as 集团军id from depart c left join depart p 
 on c.parent_id = p.depart_id) c on
 p.depart_id = c.集团军id 
-where c.集团军id in (192,193,194,195)
 order by c.集团军id, c.野战军id, c.战队id desc;
 
 # 查询顾问及基所属组织架构
@@ -970,4 +969,36 @@ right join deals d on du.deal_id  = d.deal_id
 where d.step = 4
 and d.status not in (2,4,6)
 and du.deal_id is null;
+```
+
+
+
+```
+
+-- 有效带看量
+select count(appointment_id) from appointment 
+where status in(5,6,10);
+
+-- 签约客户量
+select count(distinct customer_id) as 签约客户量 from deals
+where step = 6 
+and status not in (2,4,6,8);
+
+-- 大定客户量
+select count(distinct customer_id) as 大定客户量 from deals 
+where step = 4
+and status not in (2,4,6,8);
+
+-- 大定成交额与全款金额
+select sum(payment), sum(full_payment)
+from deals 
+where step = 4 
+and status not in (2,4,6,8);
+
+-- 签约佣金与全款金额
+select sum(payment), sum(full_payment)
+from deals 
+where step = 6
+and status not in (2,4,6,8);
+
 ```
