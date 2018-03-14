@@ -561,6 +561,23 @@ p.depart_id = c.集团军id
 where c.集团军id in (192,193,194,195)
 order by c.集团军id, c.野战军id, c.战队id desc;
 
+
+select c.status, c.code, c.role_bitmap,
+c.战队id, c.战队名称, 
+c.野战军id, c.野战军名称,
+p.depart_id as 集团军id, 
+p.dept_name as 集团军名称, 
+p.parent_id from depart p left join (select 
+c.depart_id as 战队id, c.dept_name as 战队名称, 
+c.parent_id as 野战军id, p.dept_name as 野战军名称, 
+p.parent_id as 集团军id, c.role_bitmap, c.status, c.code from depart c left join depart p 
+on c.parent_id = p.depart_id) c on
+p.depart_id = c.集团军id
+where c.status = 0 
+and c.code = 4
+and c.role_bitmap = 2
+and c.集团军id >= 192;
+
 select u.user_id, u.department_id, b.* from user u left join (select 
 c.战队id, c.战队名称, 
 c.野战军id, c.野战军名称,
@@ -1002,3 +1019,554 @@ where step = 6
 and status not in (2,4,6,8);
 
 ```
+
+
+
+
+
+
+```
+# 审核状态说明: [审核状态]所有状态:nil,项目经理审批:1,财务已审批:3,财务已驳回:4,客服回访正常:5,客服回访异常:6,财务待审批:7,项目经理已驳回:8          
+# 成交状态说明: [成交状态]排卡:2,退卡:3,大定:4,退定:5,签约:6,退签:7          
+# 先筛选出成交信息  
+TEMP QY =
+SELECT 成交记录id AS 签约id, 
+       客户id, 
+CONCAT(TO_DATE(成交时间), ' ', '00:00:00') AS 签约日期,
+FIRST_DAY_OF_MONTH(YEAR(成交时间), MONTH(成交时间)) AS 签约月,
+支付金额 AS 首付金额, 
+总金额 AS 全款金额, 
+佣金金额, 
+优惠金额,
+其他金额, 
+转介费用
+FROM 客户成交表
+WHERE 成交状态id = 6
+AND 审核状态id NOT IN (2, 4, 6, 8)
+AND 成交时间 >= '2016-05-01'
+TEMP DU = 
+select DU.顾问id,     
+       DU.成交套数, 
+       DU.成交id,
+       QY.客户id,     
+       QY.签约id,     
+       QY.签约日期,     
+       QY.签约月,     
+       QY.首付金额,     
+       QY.全款金额,     
+       QY.佣金金额 AS 总佣金,     
+       (QY.佣金金额*DU.成交套数) as 佣金金额,     
+       (QY.优惠金额*DU.成交套数) as 优惠金额,     
+       (QY.其他金额*DU.成交套数) as 其他金额,     
+       (QY.转介费用*DU.成交套数) as 转介费用,     
+       if(((QY.佣金金额*DU.成交套数)-(QY.优惠金额*DU.成交套数)-((QY.佣金金额*DU.成交套数)*0.08))>0,((QY.佣金金额*DU.成交套数)-(QY.优惠金额*DU.成交套数)-((QY.佣金金额*DU.成交套数)*0.08)),0) as 毛佣金     
+FROM 成交顾问表 DU JOIN QY ON DU.成交id = QY.签约id
+OUTPUT     
+SELECT a.顾问id,     
+       a.顾问姓名,     
+       a.城市id,     
+       a.城市名称,     
+       a.分公司id,     
+       a.分公司名称,     
+       a.战队id,     
+       a.战队名称,     
+       a.野战军id,     
+       a.野战军名称,     
+       a.集团军id,     
+       a.集团军名称,     
+       a.主管名称,     
+       a.顾问星级,     
+       a.入职日期,     
+       a.顾问入职时长,     
+       a.顾问在离职状态,     
+       a.后台角色 as 顾问角色,     
+       a.是否顾问,     
+       if(DU.成交套数 is not null,     
+       DU.成交套数,     
+       0) as 成交套数,     
+       DU.签约id,     
+       DU.签约日期,     
+       DU.签约月,     
+       DU.首付金额,     
+       DU.全款金额,     
+       DU.总佣金,     
+       DU.佣金金额,     
+       DU.优惠金额,     
+       DU.其他金额,     
+       DU.转介费用,     
+       DU.毛佣金,     
+       c.客户id,     
+       c.客户姓名,     
+       c.一级获客方式,     
+       c.二级获客方式,     
+       c.三级获客方式,     
+       c.一级进线类型,     
+       c.二级进线类型,     
+       ad.日期 as 查询日期,     
+       a.流转id as 顾问流转id,     
+       a.流转日期 as 顾问流转日期,     
+       a.结束流转日期 as 顾问结束流转日期     
+FROM 顾问表_1010 a LEFT     
+JOIN 顾问日期表 ad ON ad.顾问id=a.顾问id     
+AND ad.日期 >= a.流转日期     
+AND ad.日期 <= a.结束流转日期 LEFT     
+JOIN DU ON DU.顾问id = ad.顾问id     
+AND DU.签约日期 = ad.日期     
+AND DU.签约日期 >= a.流转日期     
+AND DU.签约日期 <= a.结束流转日期 LEFT     
+JOIN 客户原表 c ON DU.客户id=c.客户id
+
+```
+
+
+
+
+```
+# 审核状态说明: [审核状态]所有状态:nil,项目经理审批:1,财务已审批:3,财务已驳回:4,客服回访正常:5,客服回访异常:6,财务待审批:7,项目经理已驳回:8          
+# 成交状态说明: [成交状态]排卡:2,退卡:3,大定:4,退定:5,签约:6,退签:7          
+# 先筛选出成交信息                                
+TEMP du =     
+select du.顾问id,     
+       du.成交套数,     
+       d.客户id,     
+       d.成交记录id as 签约id,     
+       concat(to_date(d.成交时间),' ','00:00:00') as 签约日期,     
+       FIRST_DAY_OF_MONTH(year(d.成交时间),month(d.成交时间)) as 签约月,     
+       d.支付金额 as 首付金额,     
+       d.总金额 as 全款金额,     
+       d.佣金金额 as 总佣金,     
+       (d.佣金金额*du.成交套数) as 佣金金额,     
+       (d.优惠金额*du.成交套数) as 优惠金额,     
+       (d.其他金额*du.成交套数) as 其他金额,     
+       (d.转介费用*du.成交套数) as 转介费用,     
+       if(((d.佣金金额*du.成交套数)-(d.优惠金额*du.成交套数)-((d.佣金金额*du.成交套数)*0.08))>0,((d.佣金金额*du.成交套数)-(d.优惠金额*du.成交套数)-((d.佣金金额*du.成交套数)*0.08)),0) as 毛佣金     
+from 成交顾问表 du     
+JOIN 客户成交表 d ON d.成交记录id = du.成交id     
+and d.成交状态id=6     
+and d.审核状态id not in (2,     
+                     4,     
+                     6,8)     
+and d.成交时间>='2016-05-01'
+OUTPUT     
+SELECT a.顾问id,     
+       a.顾问姓名,     
+       a.城市id,     
+       a.城市名称,     
+       a.分公司id,     
+       a.分公司名称,     
+       a.战队id,     
+       a.战队名称,     
+       a.野战军id,     
+       a.野战军名称,     
+       a.集团军id,     
+       a.集团军名称,     
+       a.主管名称,     
+       a.顾问星级,     
+       a.入职日期,     
+       a.顾问入职时长,     
+       a.顾问在离职状态,     
+       a.后台角色 as 顾问角色,     
+       a.是否顾问,     
+       if(du.成交套数 is not null,     
+       du.成交套数,     
+       0) as 成交套数,     
+       du.签约id,     
+       du.签约日期,     
+       du.签约月,     
+       du.首付金额,     
+       du.全款金额,     
+       du.总佣金,     
+       du.佣金金额,     
+       du.优惠金额,     
+       du.其他金额,     
+       du.转介费用,     
+       du.毛佣金,     
+       c.客户id,     
+       c.客户姓名,     
+       c.一级获客方式,     
+       c.二级获客方式,     
+       c.三级获客方式,     
+       c.一级进线类型,     
+       c.二级进线类型,     
+       ad.日期 as 查询日期,     
+       a.流转id as 顾问流转id,     
+       a.流转日期 as 顾问流转日期,     
+       a.结束流转日期 as 顾问结束流转日期     
+FROM 顾问表_1010 a LEFT     
+JOIN 顾问日期表 ad ON ad.顾问id=a.顾问id     
+AND ad.日期 >= a.流转日期     
+AND ad.日期 <= a.结束流转日期 LEFT     
+JOIN du ON du.顾问id = ad.顾问id     
+AND du.签约日期=ad.日期     
+AND du.签约日期 >= a.流转日期     
+AND du.签约日期 <= a.结束流转日期 LEFT     
+JOIN 客户原表 c ON du.客户id=c.客户id
+
+```
+
+
+
+```
+select * from user where user_id = 431530846672898;
+
+select * from advisor_transfer_records where advisor_id = 381459908270078;
+
+select * from deals where `receivable_money` < 0;
+
+select * from deals where user_id = 375667173810175;
+
+select * from user where real_name = '陈方能';
+
+select * from transfer_records where customer_id = 425916340918270;
+
+select * from deals where step = 6 and status not in (2,4,6,8)
+and department_name = '飞蝎队'
+and date(created_at) >= '2018-01-01' and date(created_at) <= '2018-01-10';
+
+select * from deal_user where date(created_at) >= '2018-01-01' and date(created_at) <= '2018-01-11'
+and department_name = '争锋队';
+
+select * from user where 
+-- department_name = '麒麟队' and role_bitmap = 2 and status = 2;
+-- real_name like '%金毅';
+user_id = 420254434086914;
+
+select * from advisor_transfer_records where 
+-- new_depart_name = '超越队';
+advisor_id = 295669029314559;
+
+select * from depart where depart_id = 366;
+
+'超越队', 302;
+
+ from advisor_transfer_records where id = 425507769012224;
+
+select b.user_id, b.real_name, b.city_id, c.new_depart_name, c.new_depart_id from (
+
+select * from user where status = 2 and role_bitmap = 2 and is_advisor) b left join 
+
+advisor_transfer_records c on b.user_id = c.advisor_id ;
+
+select * from depart where dept_name = '破晓队';
+
+select * from advisor_transfer_records where new_depart_name = '破晓队';
+
+(443866547502449671,443866547502449672);
+
+select u.user_id,u.real_name,u.is_advisor, u.role_bitmap, u.status,  u.department_id, b.* from user u left join (
+select c.status, c.code, c.role_bitmap,
+c.战队id, c.战队名称, 
+c.野战军id, c.野战军名称,
+p.depart_id as 集团军id, 
+p.dept_name as 集团军名称, 
+p.parent_id from depart p left join (select 
+c.depart_id as 战队id, c.dept_name as 战队名称, 
+c.parent_id as 野战军id, p.dept_name as 野战军名称, 
+p.parent_id as 集团军id, c.role_bitmap, c.status, c.code from depart c left join depart p 
+on c.parent_id = p.depart_id) c on
+p.depart_id = c.集团军id
+where c.status = 0 
+and c.code = 4
+and c.role_bitmap = 2
+and c.集团军id >= 192) b on u.department_name = b.战队名称
+where u.department_name = '钢七连';
+
+select * from advisor_transfer_recor where 
+-- advisor_id = 418481976696831 and 
+new_depart_name = '钢七连';
+
+select * from user where department_name = '总经办';
+
+select * from user where is_advisor = 1  and role_bitmap = 2 and department_name = '总经办';
+
+select * from customer where sourse_level1_id is null and date(created_at) >= '2017-10-01';
+
+select * from user where user_id = 418481976696831;
+
+select * from customer where phone = 17190115870;
+
+select * from user where real_name = '颜文梁';
+
+select * from advisor_transfer_records where advisor_id = 430815884716034;
+
+
+select * from deals d left join deal_user du 
+on d.deal_id = du.deal_id 
+where date(d.created_at) >= '2018-01-01' and date(d.created_at) <= '2018-01-16'
+and d.step = 4 and d.status not in(2,4,6,8)
+-- group by d.city_id;
+and d.city_id = 288405237291010;
+-- ;
+
+
+select d.city_id, count(0) from deals d left join (select du.* from deal_user du left join user u 
+on du.deal_user_id = u.user_id) du 
+on d.user_id = du.deal_user_id where 
+-- date(d.created_at) >= '2018-01-01' and date(d.created_at) <= '2018-01-16'
+-- date(d.created_at) >= '2017-01-01' and date(d.created_at) <= '2017-01-31'
+-- date(d.created_at) >= '2017-02-01' and date(d.created_at) <= '2017-02-28'
+-- date(d.created_at) >= '2017-03-01' and date(d.created_at) <= '2017-03-31'
+date(d.created_at) >= '2017-04-01' and date(d.created_at) <= '2017-04-30'
+and d.step = 4 and d.status not in(2,4,6,8)
+group by d.city_id;
+-- and d.city_id = 288405237291010;
+
+
+-- deal_set
+select d.city_id, SUM(IF(du.`deal_set` is null, if(d.deal_id is not null, 1, 0), du.deal_set)) from deals d left join 
+deal_user du on d.deal_id = du.deal_id where 
+-- date(d.created_at) >= '2018-01-01' and date(d.created_at) <= '2018-01-16'
+date(d.created_at) >= '2017-01-01' and date(d.created_at) <= '2017-01-31'
+-- date(d.created_at) >= '2017-02-01' and date(d.created_at) <= '2017-02-28'
+-- date(d.created_at) >= '2017-03-01' and date(d.created_at) <= '2017-03-31'
+-- date(d.created_at) >= '2017-04-01' and date(d.created_at) <= '2017-04-30'
+and d.step = 4 and d.status not in(2,4,6,8)
+group by d.city_id;
+
+-- deal_set 成交顾问明细
+select distinct du.deal_id from deals d left join deal_user du 
+on d.deal_id = du.deal_id where 
+-- date(d.created_at) >= '2018-01-01' and date(d.created_at) <= '2018-01-16'
+-- date(d.created_at) >= '2017-01-01' and date(d.created_at) <= '2017-01-31'
+-- date(d.created_at) >= '2017-02-01' and date(d.created_at) <= '2017-02-28'
+-- date(d.created_at) >= '2017-03-01' and date(d.created_at) <= '2017-03-31'
+date(d.created_at) >= '2017-04-01' and date(d.created_at) <= '2017-04-30'
+and d.step = 4 and d.status not in(2,4,6,8)
+and d.city_id = 263804351010818;
+
+-- 客户成交
+select d.city_id,count(distinct deal_id) from deals d where 
+-- date(d.created_at) >= '2018-01-01' and date(d.created_at) <= '2018-01-16'
+date(d.created_at) >= '2017-01-01' and date(d.created_at) <= '2017-01-31'
+-- date(d.created_at) >= '2017-02-01' and date(d.created_at) <= '2017-02-28'
+-- date(d.created_at) >= '2017-03-01' and date(d.created_at) <= '2017-03-31'
+-- date(d.created_at) >= '2017-04-01' and date(d.created_at) <= '2017-04-30'
+and d.step = 4 and d.status not in(2,4,6,8)
+GROUP BY d.city_id;
+
+-- 客户成交明细
+select distinct d.deal_id from deals d where 
+-- date(d.created_at) >= '2017-01-01' and date(d.created_at) <= '2017-01-31'
+-- date(d.created_at) >= '2017-02-01' and date(d.created_at) <= '2017-02-28'
+date(d.created_at) >= '2017-04-01' and date(d.created_at) <= '2017-04-30'
+and d.step = 4 and d.status not in(2,4,6,8)
+and d.city_id = 263804351010818;
+
+select du.* from deal_user du left join user u 
+on du.deal_user_id = u.user_id;
+
+select * from user where user_id 
+in (378997833805823,326102215036927,382534902558719);
+-- = 328189771905022;
+
+select * from deal_user where advisor_id = 328189771905022;
+
+select * from deals where user_id 
+in (378997833805823,326102215036927,382534902558719)
+-- = 328189771905022 
+and step = 4 and status not in (2,4,6,8);
+
+select * from deals where deal_id 
+-- = 432828019175426;
+in (394940178458953,394940178458964,394940178458970);
+
+select * from deal_user where deal_id 
+-- = 432828019175426;
+in (394940178458953,394940178458964,394940178458970);
+-- (394940178458946,394940178458947,394940178458950);
+
+```
+
+
+
+# 审核状态说明: [审核状态]所有状态:nil,项目经理审批:1,财务已审批:3,财务已驳回:4,客服回访正常:5,客服回访异常:6,财务待审批:7,项目经理已驳回:8                 
+# 成交状态说明: [成交状态]排卡:2,退卡:3,大定:4,退定:5,签约:6,退签:7                 
+TEMP dd =           
+select du.顾问id,           
+       if(du.成交套数 is null, 0, du.成交套数) as 大定套数,           
+       d.客户id,           
+       d.成交记录id as 大定id,           
+       concat(to_date(d.成交时间),' ','00:00:00') as 大定日期,           
+       FIRST_DAY_OF_MONTH(year(d.成交时间),month(d.成交时间)) as 大定月,         
+       d.审核状态id,       
+       d.支付金额 as 大定金额,           
+       d.总金额 as 全款金额,           
+       d.佣金金额 as 总佣金,           
+       (d.佣金金额*du.成交套数) as 佣金金额,           
+       (d.优惠金额*du.成交套数) as 优惠金额,           
+       (d.其他金额*du.成交套数) as 其他扣减金额,           
+       (d.转介费用*du.成交套数) as 转介费用,           
+       if(((d.佣金金额*du.成交套数)-(d.优惠金额*du.成交套数)-((d.佣金金额*du.成交套数)*0.08))>0,((d.佣金金额*du.成交套数)-(d.优惠金额*du.成交套数)-((d.佣金金额*du.成交套数)*0.08)),0) as 毛佣金,           
+       (d.电商费用*du.成交套数) as 电商费用,           
+       (d.成交面积*du.成交套数) as 成交面积           
+from 成交顾问表 du LEFT     
+JOIN 客户成交表 d ON d.成交记录id = du.成交id           
+and d.成交状态id=4           
+and d.审核状态id not in (2,4,6,8)           
+and d.成交时间>='2016-05-01 00:00:00'
+OUTPUT           
+select c.客户id,           
+       c.客户姓名,           
+       c.线索日期,           
+       c.是否有效,           
+       a.城市id,           
+       a.城市名称,           
+       a.分公司id,           
+       a.分公司名称,           
+       arc.战队id,           
+       arc.战队名称,           
+       arc.野战军id,           
+       arc.野战军名称,           
+       arc.集团军id,           
+       IF(arc.集团军名称 IS NULL, 'A', arc.集团军名称) AS 集团军名称,           
+       a.顾问id,           
+       a.顾问姓名,           
+       a.后台角色 as 顾问角色,           
+       a.是否顾问,           
+       a.顾问在离职状态,           
+       a.顾问入职时长,           
+       dd.大定日期,           
+       dd.大定月,           
+       dd.大定id,           
+       dd.审核状态id,       
+       if(dd.大定套数 is null, 0, dd.大定套数) as 大定套数,           
+       if(dd.大定日期 is not null, c.客户id, NULL) as 大定量,           
+       if(dd.大定金额>0, dd.大定金额, 0) as 大定金额,           
+       if(dd.全款金额>0, dd.全款金额, 0) as 全款金额,           
+       if(dd.佣金金额>0, dd.佣金金额, 0) as 佣金金额,           
+       if(dd.优惠金额>0, dd.优惠金额, 0) as 优惠金额,           
+       if(dd.其他扣减金额>0, dd.其他扣减金额, 0) as 其他扣减金额,           
+       if(dd.成交面积>0, dd.成交面积, 0) as 成交面积,           
+       if(dd.电商费用>0, dd.电商费用, 0) as 电商费用,           
+       if(dd.转介费用>0, dd.转介费用, 0) as 转介费用,           
+       ad.日期 as 查询日期           
+from 顾问原表 a left join 组织架构管理 arc on a.战队id = arc.战队id left           
+join 顾问日期表 ad on ad.顾问id=a.顾问id left           
+join dd on dd.顾问id=ad.顾问id           
+and dd.大定日期 = ad.日期 left           
+join 客户原表 c on c.客户id=dd.客户id
+
+
+
+
+
+# 按月和战队统计大定套数和平均编制                     
+# 大定月 is Null 意味着这个顾问并没有签约          
+TEMP zdqy =         
+select 集团军id,         
+       野战军id,         
+       战队id,         
+       大定月,         
+       count(distinct 顾问id) as 大定顾问人数,         
+       sum(大定套数) as 大定套数         
+from T_顾问大定合表         
+where 大定月 is not null         
+group by 集团军id,         
+         野战军id,         
+         战队id,         
+         大定月
+# 团队编制表里有个坑, 同一个战队id对应多个战队名称, 因此join时带上战队名称                    
+# #按月统计, 每个月每个战队一条记录       
+#  round(sum(在职人数)/count(distinct 编制日期),4) as 平均编制,      
+# join 组织架构管理, 取出最新的组织架构下的在职, 离职人数    
+
+
+
+
+
+
+
+
+TEMP IO =  
+SELECT CONCAT(TO_DATE(LZ.创建时间), ' ', '00:00:00') AS 入离职日期,  
+       IF(LZ.类型 = 1,  
+       '入职',  
+       '离职') AS 入离职类型,  
+       LZ.新战队id AS 战队id,  
+       LZ.顾问id  
+FROM 顾问流转记录表 LZ  
+WHERE LZ.类型 IN (1,2)
+TEMP BASE =  
+SELECT IO.顾问id,  
+       IO.入离职类型,  
+       IO.战队id,  
+       A.战队名称,  
+       A.野战军id,  
+       A.野战军名称,  
+       A.集团军id,  
+       A.集团军名称,  
+       IO.入离职日期  
+FROM 顾问表 A LEFT  
+JOIN IO ON A.顾问id = IO.顾问id
+TEMP TODAY = 
+SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当天入职顾问数,  
+       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当天离职顾问数,
+       B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,    
+       F.当天  
+FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 = F.当天 
+GROUP BY B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,
+       F.当天
+TEMP CURR_WEEK = 
+SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当周入职顾问数,  
+       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当周离职顾问数,  
+       B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,    
+       F.当周第一天  
+FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 >= F.当周第一天
+GROUP BY B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,
+       F.当周第一天 
+TEMP CURR_MONTH = 
+SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当月入职顾问数,  
+       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当月离职顾问数,  
+       B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,   
+       F.当月第一天  
+FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 >= F.当月第一天
+GROUP BY B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,
+       F.当月第一天
+OUTPUT
+SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当月入职顾问数,  
+       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当月离职顾问数,  
+       B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,   
+       F.当年第一天  
+FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 >= F.当年第一天
+GROUP BY B.战队id,  
+       B.战队名称,  
+       B.野战军id,  
+       B.野战军名称,  
+       B.集团军id,  
+       B.集团军名称,
+       F.当年第一天
