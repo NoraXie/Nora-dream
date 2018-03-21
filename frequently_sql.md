@@ -1377,8 +1377,7 @@ in (394940178458953,394940178458964,394940178458970);
 
 ```
 
-
-
+```
 # 审核状态说明: [审核状态]所有状态:nil,项目经理审批:1,财务已审批:3,财务已驳回:4,客服回访正常:5,客服回访异常:6,财务待审批:7,项目经理已驳回:8                 
 # 成交状态说明: [成交状态]排卡:2,退卡:3,大定:4,退定:5,签约:6,退签:7                 
 TEMP dd =           
@@ -1445,128 +1444,39 @@ join 顾问日期表 ad on ad.顾问id=a.顾问id left
 join dd on dd.顾问id=ad.顾问id           
 and dd.大定日期 = ad.日期 left           
 join 客户原表 c on c.客户id=dd.客户id
+```
+
+# 大定佣金修改数据用的sql
+
+```
+# 找到客户
+SELECT * FROM customer WHERE `name` = '方博';
+
+# 找到成交数据
+SELECT * FROM deals WHERE customer_id = 415767931801599;
+
+# 找到成交项目
+SELECT * FROM projects WHERE item_id = 432235063332863;
+
+# 找到分销项目
+SELECT * FROM project_fenxiaos WHERE project_id = 442730205583362;
+
+# 找到楼盘
+SELECT * FROM item WHERE item_name LIKE '%碧桂园南城首府%';
+
+# 代发放提成
+SELECT * FROM advisor_expected_commissions WHERE deal_id = ;
+
+-- UPDATE advisor_expected_commissions SET commission = (total_commission*rate*deal_set*quality*royalty_rate) WHERE deal_id = ;
+```
+
+
+
+
+  
 
 
 
 
 
-# 按月和战队统计大定套数和平均编制                     
-# 大定月 is Null 意味着这个顾问并没有签约          
-TEMP zdqy =         
-select 集团军id,         
-       野战军id,         
-       战队id,         
-       大定月,         
-       count(distinct 顾问id) as 大定顾问人数,         
-       sum(大定套数) as 大定套数         
-from T_顾问大定合表         
-where 大定月 is not null         
-group by 集团军id,         
-         野战军id,         
-         战队id,         
-         大定月
-# 团队编制表里有个坑, 同一个战队id对应多个战队名称, 因此join时带上战队名称                    
-# #按月统计, 每个月每个战队一条记录       
-#  round(sum(在职人数)/count(distinct 编制日期),4) as 平均编制,      
-# join 组织架构管理, 取出最新的组织架构下的在职, 离职人数    
 
-
-
-
-
-
-
-
-TEMP IO =  
-SELECT CONCAT(TO_DATE(LZ.创建时间), ' ', '00:00:00') AS 入离职日期,  
-       IF(LZ.类型 = 1,  
-       '入职',  
-       '离职') AS 入离职类型,  
-       LZ.新战队id AS 战队id,  
-       LZ.顾问id  
-FROM 顾问流转记录表 LZ  
-WHERE LZ.类型 IN (1,2)
-TEMP BASE =  
-SELECT IO.顾问id,  
-       IO.入离职类型,  
-       IO.战队id,  
-       A.战队名称,  
-       A.野战军id,  
-       A.野战军名称,  
-       A.集团军id,  
-       A.集团军名称,  
-       IO.入离职日期  
-FROM 顾问表 A LEFT  
-JOIN IO ON A.顾问id = IO.顾问id
-TEMP TODAY = 
-SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当天入职顾问数,  
-       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当天离职顾问数,
-       B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,    
-       F.当天  
-FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 = F.当天 
-GROUP BY B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,
-       F.当天
-TEMP CURR_WEEK = 
-SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当周入职顾问数,  
-       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当周离职顾问数,  
-       B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,    
-       F.当周第一天  
-FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 >= F.当周第一天
-GROUP BY B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,
-       F.当周第一天 
-TEMP CURR_MONTH = 
-SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当月入职顾问数,  
-       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当月离职顾问数,  
-       B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,   
-       F.当月第一天  
-FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 >= F.当月第一天
-GROUP BY B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,
-       F.当月第一天
-OUTPUT
-SELECT COUNT(DISTINCT IF(入离职类型 = '入职',B.顾问id, NULL)) AS 当月入职顾问数,  
-       COUNT(DISTINCT IF(入离职类型 = '离职',B.顾问id, NULL)) AS 当月离职顾问数,  
-       B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,   
-       F.当年第一天  
-FROM BASE B JOIN T_各种第一天 F ON B.入离职日期 >= F.当年第一天
-GROUP BY B.战队id,  
-       B.战队名称,  
-       B.野战军id,  
-       B.野战军名称,  
-       B.集团军id,  
-       B.集团军名称,
-       F.当年第一天
