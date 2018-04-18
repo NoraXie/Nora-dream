@@ -545,3 +545,296 @@ A在一军, B在三军. 3月初, 一军会有一笔应收账款. 3月16日开始
 
 - 疏理客源模块实现逻辑(先想得细一些, 避免过多的重复工作)
 
+# 今日工作任务[2018-04-03]
+
+> 今日已完成
+
+- 顾问拔打量图表开发且已上线(通过择居顾问APP和择居手机拔打, 并且有通话录音的拔打记录进行统计), 等冯文军录音数据同步完后更新一下录音文件的地址即可.
+- 战队分析的战斗力分析图表优化
+- 疏理运营漏斗图表核心概念
+
+> 明日计划
+
+- 继续优化战队分析(战斗力与战队业绩)图表
+- 继续整理运营图表 
+
+# 今日工作任务[2018-04-04]
+
+> 今日已完成
+
+- 整理顾问出发的线索/上户/带看/大定/签约漏斗
+- 只显示两个渠道, 客服分配的和直接拔打顾问电话的直接上户. 漏斗从上户开始往下漏. 
+- 另一个渠道,是顾问自己主动获取的, 从线索开始漏. 这个漏斗是从顾问手里的线索开始往下漏. 包括激活的. 
+- 整理从公司角度(运营角度)出发的线索/上户/带看/大定/签约转化漏斗
+    
+> 可以预见的问题
+
+- 是否还需要从获客渠道去区分出顾问的线索转化情况, 因为线索的获客方式分为首次获客与重复进线两种情况. 首次获客不变, 但是重复进线在变化.
+- 如果是首次获客记录在customer表. 如果取流转到顾问时的方式, 则是动态变化的. 这个要记录在哪张表呢. 如果记录在customer表, BDP里会出现与客户流转表关联时的数据膨胀问题. 
+- 顾问名下有过上户动作的记录放在客户流转表.
+- 需要完成了动作之后的客户才能算一个转访. 
+- 大定, 必须是一个经过审核通过的才算么还是说只需要提交了大定的都算顾问的一个大定业绩. (问过eric,这里是考核顾问能力, 所以应该将顾问的战斗能力第一时间体现出来, 因此不该再通过审批通过的数据, 算头不算尾. 但是从公司角度出发的业绩与签约成交则只算尾不算头, 只需要财务审批通过的).
+- 签约, 必须是一个经过审核通过的才算么, 还是说只需要提交了成交的才能算顾问的一个签约成交量. (问过eric,这里是考核顾问能力, 所以应该将顾问的战斗能力第一时间体现出来, 因此不该再通过审批通过的数据).
+
+> 从公司角度出发的漏斗各级转化细节 
+
+- 获客方式(首次获客方式)
+- 激活方式(再次激活时的获客方式)
+- 线索量: 客户表首次获客来的有效/无效/未知的新增线索量+激活的如何能够同时放到这个线索量里呢???+重复线索(怎么来的呢???)
+
+ 
+# 今日工作[2018-04-08]
+
+> 今日工作内容
+ 
+- 排查周末的公共客户拔打量的问题
+- 与魏总确认推广成本基础表需要的内容
+- 推广成本分析应该包括
+
+``` 
+- 线索量(新增推广进线+激活推广进线), 成本 
+- 上户量(由新增推广进线+激活推广进线转为上户的量), 成本, 率
+- 带看量(由新增推广进线+激活推广进线转为有效带看的客户量), 成本, 率
+- 大定量(由新增推广进线+激活推广进线转为大定的量, 区分出已经提交过大定的客户, 财务审批通过大定的客户, 退定的客户), 成本, 率
+```
+
+- 与择居云开发确定各个字段的实现定义
+
+```
+字段 = repeat_type[0,1,2,3]
+
+0 = 新线索(会在customer表里新增一条记录)  
+1 = 老线索(在customer表里有这个电话了, 没有服务顾问, 实际就是公海里的客户customer_class in (5,6,7,8))  
+2 = 激活线索(在customer表里从公海里捞出来后重新分配了顾问的线索,     customer_class 从 (5,6,7,8) 变为 (0,1,2,3))    
+3 = 重复线索(目前有服务顾问的客户, customer_class in (0,1,2,3))
+```
+- 开发推广成本基础表(已完成20%, 如果只需要推广线索的成本, 那么已经完成. 但是这不是运营想要的数据, 所以明天还要一天)
+
+> 明日工作计划
+
+- 开发运营推广成本基础表
+
+# 今日工作计划[2018-04-09]
+
+- 开发运营推广成本基础表
+- 排查数据异常(如: valid\_status为空的,is\_valid为空的,intent\_city\_id为空)
+- 排查207年8月1日以后的历史数据异常问题
+- 2017年8月1日以后有33条推广进线电话在customer表中没有记录.(BI上直接将这部分数据过滤掉了)
+
+> 明日工作计划
+
+- 与运营一起校对推广成本基础表并调优
+
+
+# 今日工作计划[2018-04-10]
+
+- 交付推广线索成本基础表给运营
+- BDP帐号整理
+- 顾问/客户/楼盘画像疏理 
+
+# 今日工作计划[2018-04-11]
+
+- 疏理项目分析现状及BAC盘
+- 运营数据异常排查
+- 在数据库里新建全国行政区域编码表, 为后期做区域分布图做数据准备
+- 导出回款最新回款数据给财务
+
+# 今日工作[2018-04-13]
+
+- BAC楼盘基础表开发
+
+> 明日计划
+
+- 优化BAC楼盘基础表
+
+# 今日工作[2018-04-16]
+
+- BAC打盘分析图表优化
+- 与魏总对接[推广进线转化和ROI统计规则]
+- 导出北京/苏州/长春/长沙四个城市的公海客户电话,姓名和所在区域数据给魏总
+
+
+# 今日工作[2018-04-17]
+
+- 开发推广进线转化与ROI统计规则基础表
+- 不想在这家公司待着了
+
+> 统计量:
+
+```
+- 进线量(一天一个电话为一个进线, 拉到一个月则是每一天的加和)
+- 有效进线量(一天一个电话一个有效状态为一个进线)
+- 有效进线带看量(一天一个电话一次有效带看为一个带看量)
+- 有效进线大定量(一天一个电话一次已提交的大定对应的佣金金额)
+``` 
+    
+> sql
+
+```
+SELECT
+ * 
+FROM
+ clue_promotions c 
+WHERE
+ c.is_valid = 1 
+ AND c.id = IFNULL(
+ (
+        SELECT id 
+        FROM clue_promotions
+        WHERE
+            phone = c.phone 
+            AND date( created_at ) = DATE( c.created_at ) 
+            AND is_valid = c.is_valid 
+            AND clue_level2_id <> 2 
+        ORDER BY
+            id DESC 
+            LIMIT 1 
+ ),
+ (
+    SELECT id 
+    FROM clue_promotions 
+    WHERE
+        phone = c.phone 
+        AND date( created_at ) = DATE( c.created_at ) 
+        AND is_valid = c.is_valid 
+        AND clue_level2_id = 2 
+    ORDER BY
+        id DESC 
+        LIMIT 1
+ )
+)
+group by date(c.created_at), phone;
+```
+
+
+
+# 今日工作[2018-04-18]
+
+- 实现推广进线按优先级进行统计, 实现方案: 使用sql语句实现后生成视图, 同步到BDP
+- 带看量的统计口径: 晚于进线时间的有效客户的有效带看才会被统计到
+- 开发推广成本与转化分析基础表(已完成50%)
+
+```
+-- 有效且新增
+SELECT
+ id
+FROM
+ clue_promotions c 
+WHERE
+ c.is_valid = 1 
+ AND c.repeat_type = 0
+ AND c.id = IFNULL(
+ (
+        SELECT id 
+        FROM clue_promotions
+        WHERE
+            phone = c.phone 
+            AND date( created_at ) = DATE( c.created_at ) 
+            AND is_valid = c.is_valid 
+            AND repeat_type = c.repeat_type
+            AND clue_level2_id <> 2 
+        ORDER BY
+            id DESC 
+            LIMIT 1 
+ ),
+    (
+        SELECT id 
+        FROM clue_promotions 
+        WHERE
+            phone = c.phone 
+            AND date( created_at ) = DATE( c.created_at ) 
+            AND is_valid = c.is_valid 
+            AND repeat_type = c.repeat_type
+            AND clue_level2_id = 2 
+        ORDER BY
+            id DESC 
+            LIMIT 1
+    ))
+  AND date(c.created_at) = '2018-04-10'
+group by date( c.created_at ), phone
+order by phone;
+
+```
+
+> 总进线量
+
+```
+select 
+max(id) as id
+from clue_promotions c
+where date(c.created_at) = '2018-04-10'
+and c.id = IFNULL(
+	IFNULL(
+		(select 
+ 		id 
+ 		from clue_promotions 
+ 		where phone = c.phone
+ 		and date(created_at) = date(c.created_at)
+ 		and is_valid = 1
+ 		order by id desc 
+ 		limit 1
+ 		),
+ 		(
+ 		select
+ 		id 
+ 		from clue_promotions
+ 		where phone = c.phone
+ 		and date(created_at) = date(c.created_at)
+ 		and is_valid = 2
+ 		order by id desc
+ 		limit 1)
+ 	),
+ 	(
+ 	select 
+ 	id
+ 	from clue_promotions 
+ 	where phone = c.phone
+ 	and date(created_at) = date(c.created_at)
+ 	and is_valid = 0
+ 	order by id desc
+ 	limit 1
+ 	)
+  )
+  group by date(c.created_at), c.phone;
+```
+
+> 这个更快
+
+```
+SELECT
+  IF (
+   (
+    SELECT
+     1
+    FROM
+     clue_promotions b
+    WHERE
+     DATE_FORMAT(b.created_at, '%Y%m%d') = DATE_FORMAT(a.created_at, '%Y%m%d')
+    AND b.sourse_level1_id = '1'
+    AND b.phone = a.phone
+    AND b.repeat_type = 2
+   ),
+   (
+    SELECT
+     id
+    FROM
+     clue_promotions c
+    WHERE
+     DATE_FORMAT(c.created_at, '%Y%m%d') = DATE_FORMAT(a.created_at, '%Y%m%d')
+    AND c.sourse_level1_id = '1'
+    AND c.phone = a.phone
+    AND c.repeat_type = 2
+    LIMIT 1
+   ),
+   MAX(a.`id`)
+  ) as id
+  FROM
+   `clue_promotions` a
+  WHERE
+   a.created_at >= '2018-04-10 00:00:00'
+  AND a.created_at <= '2018-04-10 23:59:59'
+  AND a.sourse_level1_id = '1'
+  GROUP BY
+   a.phone,
+   DATE_FORMAT(a.created_at, '%Y%m%d');
+```
